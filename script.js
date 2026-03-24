@@ -25,51 +25,99 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add particles for background effect
     createParticles();
 
+    // --- MIDDLEWARE: EL GUARDIA DE SEGURIDAD ---
+    // Este pequeño bloque se encarga de "vigilar" las vistas protegidas.
+    const protectedViews = ['welcome']; // Lista de vistas que requieren sesión activa
+
+    function runMiddleware(requestedView) {
+        const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+
+        // Si la vista está en la lista de protegidas y NO hay sesión...
+        if (protectedViews.includes(requestedView) && !isLoggedIn) {
+            console.warn(`[Middleware] Acceso denegado a '${requestedView}'. Redirigiendo a Login.`);
+            return 'login'; // Bloquea y redirige al inicio
+        }
+
+        // Si pasa la validación, permite el acceso a la vista solicitada
+        return requestedView;
+    }
+
+    // --- LÓGICA DE SPA (Vistas) ---
+    function showView(requestedView) {
+        // Ejecutar el Middleware antes de mostrar cualquier contenido
+        const view = runMiddleware(requestedView);
+
+        const loginView = document.getElementById('loginView');
+        const welcomeView = document.getElementById('welcomeView');
+        const recoveryView = document.getElementById('recoveryView');
+
+        // Ocultar todo
+        loginView.style.display = 'none';
+        welcomeView.style.display = 'none';
+        if (recoveryView) recoveryView.style.display = 'none';
+
+        if (view === 'welcome') {
+            welcomeView.style.display = 'flex';
+            // Personalizar saludo
+            const userName = sessionStorage.getItem('userName');
+            if (userName) {
+                document.getElementById('userGreeting').innerText = 'Hola ' + userName;
+            }
+        } else if (view === 'recovery') {
+            if (recoveryView) recoveryView.style.display = 'block';
+        } else {
+            loginView.style.display = 'block';
+        }
+    }
+
+    // Navegación SPA interna
+    const toRecovery = document.getElementById('toRecovery');
+    const toLogin = document.getElementById('toLogin');
+    
+    if (toRecovery) toRecovery.onclick = (e) => { e.preventDefault(); showView('recovery'); };
+    if (toLogin) toLogin.onclick = (e) => { e.preventDefault(); showView('login'); };
+
+    // Verificar si ya hay una sesión activa al cargar
+    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+        showView('welcome');
+    }
+
+    // Manejar el cierre de sesión (SPA)
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            sessionStorage.clear();
+            showView('login');
+        });
+    }
+
     // Verificación de conexión con el servidor
-    // Usamos un pequeño delay para asegurar que todo cargó
     setTimeout(checkServerConnection, 500);
 
     async function checkServerConnection() {
         console.log("Iniciando verificación de servidor...");
         const statusText = document.querySelector('#connectionStatus .status-text');
         const statusDot = document.querySelector('#connectionStatus .status-dot');
-
-        if (!statusText || !statusDot) {
-            console.error("Elementos de estado no encontrados en el DOM");
-            return;
-        }
+        if (!statusText || !statusDot) return;
 
         const client = getSupabaseClient();
-
         if (!client) {
-            console.error("Librería de Supabase no encontrada.");
             statusText.innerText = "Error: Librería no cargada";
             statusDot.classList.add('offline');
             return;
         }
 
         try {
-            console.log("Probando respuesta de Supabase...");
-            // Intentamos una petición simple
             const { error } = await client.from('usuarios').select('id').limit(1);
-
             if (error) {
-                console.error("Respuesta de Supabase con error:", error);
-                // Si el error es de red (fetch) o de permisos
-                if (error.message.includes('FetchError') || error.message.includes('Failed to fetch')) {
-                    statusText.innerText = "Sin conexión (Red)";
-                } else {
-                    statusText.innerText = "Error Servidor [" + error.code + "]";
-                }
+                statusText.innerText = "Error Servidor [" + error.code + "]";
                 statusDot.classList.add('offline');
             } else {
-                console.log("¡Conexión exitosa!");
                 statusText.innerText = "Servidor Conectado";
                 statusDot.classList.remove('offline');
                 statusDot.classList.add('online');
             }
         } catch (e) {
-            console.error("Excepción en conexión:", e);
             statusText.innerText = "Error de conexión";
             statusDot.classList.add('offline');
         }
@@ -117,26 +165,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (testError) {
                         console.error("Error al acceder a la tabla 'usuarios':", testError);
-                        if (testError.message.includes("relation \"usuarios\" does not exist")) {
-                            alert("ERROR: La tabla 'usuarios' no existe. Verifica si se llama 'Usuarios' (con Mayúscula) o tiene otro nombre.");
-                        }
                     } else if (testData && testData.length > 0) {
                         console.log("Estructura de la tabla (primer registro):", Object.keys(testData[0]));
-                        const columns = Object.keys(testData[0]);
-                        if (!columns.includes('rut')) {
-                            console.warn("ADVERTENCIA: No encontré la columna 'rut'. Columnas actuales:", columns);
-                        }
-                        if (!columns.includes('password')) {
-                            console.warn("ADVERTENCIA: No encontré la columna 'password'.");
-                        }
-                    } else {
-                        console.log("La tabla 'usuarios' está vacía o no tiene registros.");
                     }
                     console.groupEnd();
                     // --- FIN DIAGNÓSTICO ---
 
                     // Consulta a la tabla personalizada 'usuarios'
-                    // Usamos 'rut' y 'password' que son los nombres reales de tus columnas
                     const { data, error, status } = await client
                         .from('usuarios')
                         .select('*')
@@ -148,30 +183,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (error) {
                         console.error("Error en la consulta de login:", error);
-                        // Si el error es 403, suele ser un problema de RLS (Permisos)
-                        if (status === 403 || error.code === '42501') {
-                            alert("ERROR DE PERMISOS (RLS): Tu tabla 'usuarios' tiene activada la seguridad (RLS) y no tienes una 'Policy' que permita el acceso. Debes crear una Policy en el panel de Supabase para la tabla 'usuarios'.");
-                        } else {
-                            alert("Error de Supabase [" + error.code + "]: " + error.message);
-                        }
+                        alert("Error de Supabase [" + error.code + "]: " + error.message);
                         return;
                     }
 
                     if (!data) {
                         console.warn("Login fallido: No se encontró coincidencia.");
-                        alert("No se encontró ningún usuario con ese RUT y Contraseña en la tabla 'usuarios'.\n\nVerifica en tu panel de Supabase:\n1. Que el RUT (" + username + ") existe en la columna 'rut'.\n2. Que la contraseña esté en la columna 'password'.");
+                        alert("No se encontró ningún usuario con ese RUT y Contraseña.");
                     } else {
                         // Login exitoso
                         console.log("Sesión iniciada correctamente!", data);
+
+                        // --- GUARDAR SESIÓN ---
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        sessionStorage.setItem('userRut', data.rut);
+                        if (data.nombre) sessionStorage.setItem('userName', data.nombre);
 
                         // Add success animation to button
                         submitBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
                         submitBtn.querySelector('span').innerText = '¡Conectado!';
                         submitBtn.querySelector('span').style.opacity = '1';
 
-                        // Redirect after success animation
+                        // Transition to welcome view in SPA
                         setTimeout(() => {
-                            window.location.href = 'welcome.html';
+                            showView('welcome');
+                            // Reset button for next time
+                            submitBtn.style.background = '';
+                            submitBtn.querySelector('span').innerText = 'Ingresar';
                         }, 800);
                     }
                 } catch (err) {
