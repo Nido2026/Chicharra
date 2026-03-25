@@ -50,18 +50,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const loginView = document.getElementById('loginView');
         const welcomeView = document.getElementById('welcomeView');
         const recoveryView = document.getElementById('recoveryView');
+        const versionLabel = document.getElementById('versionLabel');
 
         // Ocultar todo
         loginView.style.display = 'none';
         welcomeView.style.display = 'none';
         if (recoveryView) recoveryView.style.display = 'none';
+        if (versionLabel) versionLabel.style.display = 'none';
 
         if (view === 'welcome') {
             welcomeView.style.display = 'flex';
+            if (versionLabel) versionLabel.style.display = 'block';
             // Personalizar saludo
             const userName = sessionStorage.getItem('userName');
             if (userName) {
-                document.getElementById('userGreeting').innerText = 'Hola ' + userName;
+                document.getElementById('userGreeting').innerText = 'Bienvenido ' + userName;
             }
         } else if (view === 'recovery') {
             if (recoveryView) recoveryView.style.display = 'block';

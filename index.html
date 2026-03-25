@@ -112,20 +112,39 @@
 
     <!-- VISTA DE BIENVENIDA (SPA) -->
     <div id="welcomeView" style="display: none;">
+        <!-- Barra de navegación superior -->
+        <nav class="top-nav">
+            <div class="nav-left">
+                <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link">Inicio</a></li>
+                <li><a href="#" class="nav-link">Servicios</a></li>
+                <li><a href="#" class="nav-link">Proyectos</a></li>
+                <li><a href="#" class="nav-link">Nosotros</a></li>
+                <li><a href="#" class="nav-link">Contacto</a></li>
+            </ul>
+            <div class="logout-btn-spa" id="logoutBtn"
+                style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
+        </nav>
+
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
         <div class="orb orb-3"></div>
 
         <div class="welcome-content">
-            <img src="avatar.png" alt="Perfil" class="profile-avatar">
             <h1 class="greeting" id="userGreeting">Bienvenidos</h1>
-            <p class="welcome-subtitle">¡Has iniciado sesión con éxito!</p>
-            <div class="logout-btn-spa" id="logoutBtn">Cerrar Sesión</div>
-        </div>
-        <div style="position: fixed; bottom: 12px; left: 16px; font-size: 11px; color: rgba(255,255,255,0.35); font-family: 'Inter', sans-serif; pointer-events: none; user-select: none;">
-            v1_1 &nbsp;25/03/2025 15:20
+            <p class="welcome-subtitle">¡Has iniciado sesión 1.2!</p>
         </div>
     </div>
+
+    <!-- Etiqueta de versión global (solo visible en la vista de bienvenida) -->
+    <div id="versionLabel"
+        style="display: none; position: fixed; bottom: 12px; left: 16px; font-size: 11px; color: hsl(51, 100%, 50%); font-family: 'Inter', sans-serif; pointer-events: none; user-select: none; z-index: 9999;">
+        v1.2 &nbsp;25/03/2025 15:20
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
