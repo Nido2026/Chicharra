@@ -175,11 +175,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     const { data, error, status } = await client
                         .from('usuarios')
                         .select('*')
-                        .eq('rut', username)
-                        .eq('password', password)
+                        .eq('rut', username.trim())
+                        .eq('password', password.trim())
                         .maybeSingle();
 
                     submitBtn.classList.remove('loading');
+
+                    // --- DIAGNÓSTICO DETALLADO DE RESPUESTA ---
+                    console.group("Resultado de consulta login");
+                    console.log("HTTP Status:", status);
+                    console.log("Error:", error);
+                    console.log("Data:", data);
+                    console.groupEnd();
 
                     if (error) {
                         console.error("Error en la consulta de login:", error);
@@ -188,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     if (!data) {
-                        console.warn("Login fallido: No se encontró coincidencia.");
+                        console.warn("Login fallido: No se encontró coincidencia para rut='" + username.trim() + "'");
                         alert("No se encontró ningún usuario con ese RUT y Contraseña.");
                     } else {
                         // Login exitoso
