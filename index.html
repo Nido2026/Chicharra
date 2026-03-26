@@ -138,14 +138,15 @@
             <p class="welcome-subtitle">¡Has iniciado Nido!</p>
         </div>
     </div>
-    
+
     <!-- VISTA DE PROYECTOS (Factores) -->
     <div id="proyectosView" style="display: none;">
         <!-- Barra de navegación (repetida para SPA) -->
         <nav class="top-nav">
             <div class="nav-left">
                 <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
-                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - Proyectos</span>
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido -
+                    Proyectos</span>
             </div>
             <ul class="nav-links">
                 <li><a href="#" class="to-home nav-link">Inicio</a></li>
@@ -176,10 +177,60 @@
         </div>
     </div>
 
+    <!-- VISTA DE SERVICIOS -->
+    <div id="serviciosView" style="display: none;">
+        <!-- Barra de navegación -->
+        <nav class="top-nav">
+            <div class="nav-left">
+                <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido -
+                    Servicios</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="to-home nav-link">Inicio</a></li>
+                <li><a href="#" class="nav-link active">Servicios</a></li>
+                <li><a href="#" id="toProyectosServicios" class="nav-link">Proyectos</a></li>
+            </ul>
+            <div class="logout-btn-spa" id="logoutBtnServicios"
+                style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
+        </nav>
+
+        <div class="orb orb-1"></div>
+
+        <div class="welcome-content" style="width: 90%; max-width: 600px; margin: 100px auto 40px;">
+            <div class="calculator-card">
+                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 1.5rem;">Servicios</h2>
+                <p class="subtitle" style="margin-bottom: 2rem;">Ingresa los valores para comenzar el cálculo.</p>
+
+                <div class="calc-row">
+                    <div class="calc-group">
+                        <label for="input_servicio">Servicio</label>
+                        <input type="number" id="input_servicio" placeholder="0" step="1">
+                    </div>
+
+                    <div class="calc-group">
+                        <label for="nuevo_valor">Kg/Vol</label>
+                        <input type="number" id="nuevo_valor" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+
+                <div class="calc-divider"></div>
+
+                <div class="calc-row">
+                    <div class="calc-group" style="margin-bottom: 0;">
+                        <label for="val_tot">Valor Total</label>
+                        <input type="text" id="val_tot" placeholder="0.00" disabled>
+                    </div>
+                    <button id="ejec" class="btn-ejec">Ejec</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Etiqueta de versión global (solo visible en la vista de bienvenida) -->
     <div id="versionLabel"
         style="display: none; position: fixed; bottom: 12px; left: 16px; font-size: 11px; color: hsl(51, 100%, 50%); font-family: 'Inter', sans-serif; pointer-events: none; user-select: none; z-index: 9999;">
-        v1.3 &nbsp;25/03/2025 16:10
+        v1.4 &nbsp;26/03/2025 16:15
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

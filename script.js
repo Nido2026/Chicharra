@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MIDDLEWARE: EL GUARDIA DE SEGURIDAD ---
     // Este pequeño bloque se encarga de "vigilar" las vistas protegidas.
-    const protectedViews = ['welcome', 'proyectos']; // Lista de vistas que requieren sesión activa
+    const protectedViews = ['welcome', 'proyectos', 'servicios']; // Lista de vistas que requieren sesión activa
 
     function runMiddleware(requestedView) {
         const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const welcomeView = document.getElementById('welcomeView');
         const recoveryView = document.getElementById('recoveryView');
         const proyectosView = document.getElementById('proyectosView');
+        const serviciosView = document.getElementById('serviciosView');
         const versionLabel = document.getElementById('versionLabel');
 
         // Ocultar todo
@@ -58,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeView.style.display = 'none';
         if (recoveryView) recoveryView.style.display = 'none';
         if (proyectosView) proyectosView.style.display = 'none';
+        if (serviciosView) serviciosView.style.display = 'none';
         if (versionLabel) versionLabel.style.display = 'none';
 
         if (view === 'welcome') {
@@ -75,6 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 proyectosView.style.display = 'block';
                 loadFactoresData();
             }
+        } else if (view === 'servicios') {
+            if (serviciosView) {
+                serviciosView.style.display = 'block';
+            }
         } else {
             loginView.style.display = 'block';
         }
@@ -89,6 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const toProyectos = document.getElementById('toProyectos');
     if (toProyectos) toProyectos.onclick = (e) => { e.preventDefault(); showView('proyectos'); };
+
+    const toProyectosServicios = document.getElementById('toProyectosServicios');
+    if (toProyectosServicios) toProyectosServicios.onclick = (e) => { e.preventDefault(); showView('proyectos'); };
+
+    // Navegación a Servicios
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.innerText === 'Servicios') {
+            link.onclick = (e) => { e.preventDefault(); showView('servicios'); };
+        }
+    });
 
     // Manejar clics en "Inicio" desde otras vistas
     document.querySelectorAll('.to-home').forEach(link => {
@@ -112,6 +128,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtnProyectos = document.getElementById('logoutBtnProyectos');
     if (logoutBtnProyectos) {
         logoutBtnProyectos.addEventListener('click', () => {
+            sessionStorage.clear();
+            showView('login');
+        });
+    }
+
+    const logoutBtnServicios = document.getElementById('logoutBtnServicios');
+    if (logoutBtnServicios) {
+        logoutBtnServicios.addEventListener('click', () => {
             sessionStorage.clear();
             showView('login');
         });
@@ -447,6 +471,68 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(">>> [DEBUG] Error inesperado:", err);
             loadingEl.innerText = 'Ocurrió un error inesperado al cargar los datos.';
         }
+    }
+
+    // --- LOGICA DE LA PAGINA DE SERVICIOS (REINICIALIZADA) ---
+    // Limpieza automática explicita al hacer clic (más estable para numéricos)
+    ['input_servicio', 'nuevo_valor'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('click', function() {
+                this.value = '';
+            });
+        }
+    });
+
+    // Lógica del botón Ejecutar (ejec)
+    const ejecBtn = document.getElementById('ejec');
+    if (ejecBtn) {
+        ejecBtn.addEventListener('click', async () => {
+            const serviceName = document.getElementById('input_servicio').value.trim();
+            const kgVol = parseFloat(document.getElementById('nuevo_valor').value);
+            const valTotInput = document.getElementById('val_tot');
+
+            if (!serviceName || isNaN(kgVol)) {
+                alert("Por favor, ingresa el servicio y el valor Kg/Vol.");
+                return;
+            }
+
+            const client = getSupabaseClient();
+            if (!client) {
+                alert("Error: Cliente Supabase no disponible.");
+                return;
+            }
+
+            try {
+                // Buscamos el servicio en la tabla 'factores'
+                const { data, error } = await client
+                    .from('factores')
+                    .select('rate_cost, profit')
+                    .eq('service', serviceName)
+                    .maybeSingle();
+
+                if (error) {
+                    console.error("Error al buscar servicio:", error);
+                    alert("Error en la base de datos: " + error.message);
+                } else if (!data) {
+                    alert("El servicio '" + serviceName + "' no existe en la tabla de factores.");
+                } else {
+                    const rateCost = parseFloat(data.rate_cost) || 0;
+                    const profit = parseFloat(data.profit) || 0;
+                    const total = (kgVol * rateCost) + profit;
+                    if (valTotInput) {
+                        valTotInput.value = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        
+                        // Pequeño efecto visual de actualización
+                        valTotInput.style.color = '#10b981';
+                        setTimeout(() => valTotInput.style.color = '', 500);
+                    }
+                }
+            } catch (err) {
+                console.error("Error inesperado en cálculo:", err);
+                alert("Ocurrió un error inesperado al realizar el cálculo.");
+            }
+        });
     }
 });
 
