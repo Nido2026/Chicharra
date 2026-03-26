@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MIDDLEWARE: EL GUARDIA DE SEGURIDAD ---
     // Este pequeño bloque se encarga de "vigilar" las vistas protegidas.
-    const protectedViews = ['welcome']; // Lista de vistas que requieren sesión activa
+    const protectedViews = ['welcome', 'proyectos']; // Lista de vistas que requieren sesión activa
 
     function runMiddleware(requestedView) {
         const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
@@ -50,12 +50,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const loginView = document.getElementById('loginView');
         const welcomeView = document.getElementById('welcomeView');
         const recoveryView = document.getElementById('recoveryView');
+        const proyectosView = document.getElementById('proyectosView');
         const versionLabel = document.getElementById('versionLabel');
 
         // Ocultar todo
         loginView.style.display = 'none';
         welcomeView.style.display = 'none';
         if (recoveryView) recoveryView.style.display = 'none';
+        if (proyectosView) proyectosView.style.display = 'none';
         if (versionLabel) versionLabel.style.display = 'none';
 
         if (view === 'welcome') {
@@ -68,6 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else if (view === 'recovery') {
             if (recoveryView) recoveryView.style.display = 'block';
+        } else if (view === 'proyectos') {
+            if (proyectosView) {
+                proyectosView.style.display = 'block';
+                loadFactoresData();
+            }
         } else {
             loginView.style.display = 'block';
         }
@@ -80,6 +87,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toRecovery) toRecovery.onclick = (e) => { e.preventDefault(); showView('recovery'); };
     if (toLogin) toLogin.onclick = (e) => { e.preventDefault(); showView('login'); };
 
+    const toProyectos = document.getElementById('toProyectos');
+    if (toProyectos) toProyectos.onclick = (e) => { e.preventDefault(); showView('proyectos'); };
+
+    // Manejar clics en "Inicio" desde otras vistas
+    document.querySelectorAll('.to-home').forEach(link => {
+        link.onclick = (e) => { e.preventDefault(); showView('welcome'); };
+    });
+
     // Verificar si ya hay una sesión activa al cargar
     if (sessionStorage.getItem('isLoggedIn') === 'true') {
         showView('welcome');
@@ -89,6 +104,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
+            sessionStorage.clear();
+            showView('login');
+        });
+    }
+
+    const logoutBtnProyectos = document.getElementById('logoutBtnProyectos');
+    if (logoutBtnProyectos) {
+        logoutBtnProyectos.addEventListener('click', () => {
             sessionStorage.clear();
             showView('login');
         });
@@ -345,6 +368,86 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 600);
         });
     });
+
+    // --- CARGAR DATOS DE LA TABLA FACTORES ---
+    async function loadFactoresData() {
+        console.log(">>> [DEBUG] Llamada a loadFactoresData()");
+        const loadingEl = document.getElementById('factoresLoading');
+        const headerEl = document.getElementById('factoresHeader');
+        const bodyEl = document.getElementById('factoresBody');
+
+        if (!loadingEl || !headerEl || !bodyEl) {
+            console.error(">>> [DEBUG] Faltan elementos DOM para la tabla");
+            return;
+        }
+
+        loadingEl.style.display = 'block';
+        loadingEl.innerText = 'Cargando datos de factores...';
+        headerEl.innerHTML = '';
+        bodyEl.innerHTML = '';
+
+        const client = getSupabaseClient();
+        if (!client) {
+            console.error(">>> [DEBUG] Cliente Supabase NO inicializado");
+            loadingEl.innerText = 'Error: Cliente Supabase no disponible.';
+            return;
+        }
+
+        try {
+            console.log(">>> [DEBUG] Intentando FETCH de 'factores'...");
+            const { data, error, status, statusText } = await client
+                .from('factores')
+                .select('*');
+
+            console.group("Diagnóstico Tabla Factores");
+            console.log("HTTP Status:", status);
+            console.log("Status Text:", statusText);
+            console.log("Error:", error);
+            console.log("Data:", data);
+            console.groupEnd();
+
+            if (error) {
+                console.error("Error al cargar factores:", error);
+                loadingEl.innerText = 'Error al cargar factores: ' + error.message + ' (Code: ' + error.code + ')';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                console.warn(">>> [DEBUG] No se devolvieron datos de la tabla 'factores'");
+                loadingEl.innerText = 'No se encontraron registros en la tabla factores. (La tabla podría estar vacía o bloqueada por RLS)';
+                return;
+            }
+
+            // Ocultar mensaje de carga
+            loadingEl.style.display = 'none';
+
+            // Generar cabeceras dinámicamente basadas en el primer registro
+            const columns = Object.keys(data[0]);
+            console.log(">>> [DEBUG] Columnas encontradas:", columns);
+            
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.innerText = col.charAt(0).toUpperCase() + col.slice(1);
+                headerEl.appendChild(th);
+            });
+
+            // Generar filas
+            data.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.innerText = row[col] !== null ? row[col] : '-';
+                    tr.appendChild(td);
+                });
+                bodyEl.appendChild(tr);
+            });
+            console.log(">>> [DEBUG] Tabla renderizada con " + data.length + " filas.");
+
+        } catch (err) {
+            console.error(">>> [DEBUG] Error inesperado:", err);
+            loadingEl.innerText = 'Ocurrió un error inesperado al cargar los datos.';
+        }
+    }
 });
 
 function createParticles() {
