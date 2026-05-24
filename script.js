@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MIDDLEWARE: EL GUARDIA DE SEGURIDAD ---
     // Este pequeño bloque se encarga de "vigilar" las vistas protegidas.
-    const protectedViews = ['welcome', 'proyectos', 'servicios']; // Lista de vistas que requieren sesión activa
+    const protectedViews = ['welcome', 'proyectos', 'servicios', 'cuprum']; // Lista de vistas que requieren sesión activa
 
     function runMiddleware(requestedView) {
         const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const recoveryView = document.getElementById('recoveryView');
         const proyectosView = document.getElementById('proyectosView');
         const serviciosView = document.getElementById('serviciosView');
+        const cuprumView = document.getElementById('cuprumView');
         const versionLabel = document.getElementById('versionLabel');
 
         // Ocultar todo
@@ -60,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (recoveryView) recoveryView.style.display = 'none';
         if (proyectosView) proyectosView.style.display = 'none';
         if (serviciosView) serviciosView.style.display = 'none';
+        if (cuprumView) cuprumView.style.display = 'none';
         if (versionLabel) versionLabel.style.display = 'none';
 
         if (view === 'welcome') {
@@ -81,6 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (serviciosView) {
                 serviciosView.style.display = 'block';
             }
+        } else if (view === 'cuprum') {
+            if (cuprumView) {
+                cuprumView.style.display = 'block';
+                loadCuprumData();
+            }
         } else {
             loginView.style.display = 'block';
         }
@@ -98,6 +105,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const toProyectosServicios = document.getElementById('toProyectosServicios');
     if (toProyectosServicios) toProyectosServicios.onclick = (e) => { e.preventDefault(); showView('proyectos'); };
+
+    // Navegación a Cuprum desde distintas vistas
+    ['toCuprum', 'toCuprumProyectos', 'toCuprumServicios', 'toProyectosCuprum'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (id === 'toProyectosCuprum') {
+                el.onclick = (e) => { e.preventDefault(); showView('proyectos'); };
+            } else {
+                el.onclick = (e) => { e.preventDefault(); showView('cuprum'); };
+            }
+        }
+    });
 
     // Navegación a Servicios
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -136,6 +155,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtnServicios = document.getElementById('logoutBtnServicios');
     if (logoutBtnServicios) {
         logoutBtnServicios.addEventListener('click', () => {
+            sessionStorage.clear();
+            showView('login');
+        });
+    }
+
+    const logoutBtnCuprum = document.getElementById('logoutBtnCuprum');
+    if (logoutBtnCuprum) {
+        logoutBtnCuprum.addEventListener('click', () => {
             sessionStorage.clear();
             showView('login');
         });
@@ -473,13 +500,175 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- CARGAR DATOS DE AFP CUPRUM ---
+    let cuprumAllData = []; // caché de todos los datos
+
+    async function loadCuprumData() {
+        const loadingEl = document.getElementById('cuprumLoading');
+        const headerEl = document.getElementById('cuprumHeader');
+        const bodyEl = document.getElementById('cuprumBody');
+        const statsEl = document.getElementById('cuprumStats');
+
+        if (!loadingEl || !headerEl || !bodyEl) return;
+
+        // Si ya tenemos datos en caché, solo re-renderizar
+        if (cuprumAllData.length > 0) {
+            renderCuprumTable(cuprumAllData);
+            return;
+        }
+
+        loadingEl.style.display = 'block';
+        loadingEl.innerText = 'Cargando datos de AFP Cuprum...';
+        headerEl.innerHTML = '';
+        bodyEl.innerHTML = '';
+        if (statsEl) statsEl.style.display = 'none';
+
+        const client = getSupabaseClient();
+        if (!client) {
+            loadingEl.innerText = 'Error: Cliente Supabase no disponible.';
+            return;
+        }
+
+        try {
+            const { data, error } = await client
+                .from('cuprum')
+                .select('*')
+                .order('fecha', { ascending: false });
+
+            if (error) {
+                loadingEl.innerText = 'Error al cargar Cuprum: ' + error.message;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                loadingEl.innerText = 'No se encontraron registros en la tabla cuprum.';
+                return;
+            }
+
+            cuprumAllData = data;
+            renderCuprumTable(data);
+
+            // Activar filtros
+            const fondoFiltro = document.getElementById('cuprumFondoFiltro');
+            const buscarInput = document.getElementById('cuprumBuscar');
+
+            if (fondoFiltro) {
+                fondoFiltro.addEventListener('change', applyCuprumFilters);
+            }
+            if (buscarInput) {
+                buscarInput.addEventListener('input', applyCuprumFilters);
+            }
+
+        } catch (err) {
+            loadingEl.innerText = 'Error inesperado al cargar datos de Cuprum.';
+            console.error(err);
+        }
+    }
+
+    function applyCuprumFilters() {
+        const fondoFiltro = document.getElementById('cuprumFondoFiltro');
+        const buscarInput = document.getElementById('cuprumBuscar');
+        const fondo = fondoFiltro ? fondoFiltro.value : 'all';
+        const buscar = buscarInput ? buscarInput.value.trim().toLowerCase() : '';
+
+        let filtered = cuprumAllData;
+
+        if (buscar) {
+            filtered = filtered.filter(row => {
+                const fecha = row.fecha ? String(row.fecha).toLowerCase() : '';
+                return fecha.includes(buscar);
+            });
+        }
+
+        renderCuprumTable(filtered, fondo);
+    }
+
+    function renderCuprumTable(data, fondoFiltro = 'all') {
+        const loadingEl = document.getElementById('cuprumLoading');
+        const headerEl = document.getElementById('cuprumHeader');
+        const bodyEl = document.getElementById('cuprumBody');
+        const statsEl = document.getElementById('cuprumStats');
+
+        if (loadingEl) loadingEl.style.display = 'none';
+        headerEl.innerHTML = '';
+        bodyEl.innerHTML = '';
+
+        // Determinar columnas a mostrar
+        const allCols = ['fecha', 'fondo_a', 'fondo_b', 'fondo_c', 'fondo_d', 'fondo_e'];
+        const fondoCols = fondoFiltro === 'all' ? allCols : ['fecha', fondoFiltro];
+
+        // Etiquetas de cabecera
+        const colLabels = {
+            fecha: 'Fecha',
+            fondo_a: 'Fondo A',
+            fondo_b: 'Fondo B',
+            fondo_c: 'Fondo C',
+            fondo_d: 'Fondo D',
+            fondo_e: 'Fondo E'
+        };
+
+        // Cabeceras
+        fondoCols.forEach(col => {
+            const th = document.createElement('th');
+            th.innerText = colLabels[col] || col;
+            headerEl.appendChild(th);
+        });
+
+        // Filas
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            fondoCols.forEach(col => {
+                const td = document.createElement('td');
+                if (col === 'fecha') {
+                    // Formatear fecha legible
+                    const d = new Date(row[col] + 'T00:00:00');
+                    td.innerText = isNaN(d.getTime()) ? (row[col] || '-') :
+                        d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+                    td.style.fontWeight = '500';
+                    td.style.color = '#c4b5fd';
+                } else {
+                    const val = parseFloat(row[col]);
+                    td.innerText = isNaN(val) ? '-' : val.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                tr.appendChild(td);
+            });
+            bodyEl.appendChild(tr);
+        });
+
+        // Barra de estadísticas
+        if (statsEl && data.length > 0 && fondoFiltro !== 'all') {
+            const vals = data.map(r => parseFloat(r[fondoFiltro])).filter(v => !isNaN(v));
+            if (vals.length > 0) {
+                const ultimo = vals[0];
+                const primero = vals[vals.length - 1];
+                const variacion = ((ultimo - primero) / primero * 100).toFixed(2);
+                const max = Math.max(...vals).toLocaleString('es-CL', { minimumFractionDigits: 2 });
+                const min = Math.min(...vals).toLocaleString('es-CL', { minimumFractionDigits: 2 });
+                const trend = variacion >= 0 ? '▲' : '▼';
+                const trendColor = variacion >= 0 ? '#34d399' : '#f87171';
+                statsEl.innerHTML = `
+                    <span>📊 <strong>${data.length}</strong> registros</span>
+                    <span>⬆ Máx: <strong>${max}</strong></span>
+                    <span>⬇ Mín: <strong>${min}</strong></span>
+                    <span style="color:${trendColor}">${trend} Variación: <strong>${variacion}%</strong></span>
+                `;
+                statsEl.style.display = 'flex';
+            }
+        } else if (statsEl) {
+            statsEl.innerHTML = `<span>📊 <strong>${data.length}</strong> registros cargados</span>`;
+            statsEl.style.display = 'flex';
+        }
+    }
+
     // --- LOGICA DE LA PAGINA DE SERVICIOS (REINICIALIZADA) ---
-    // Limpieza automática explicita al hacer clic (más estable para numéricos)
+    // Limpieza al recibir el foco usando setTimeout para evitar bloqueos del teclado y del foco
     ['input_servicio', 'nuevo_valor'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            el.addEventListener('click', function() {
-                this.value = '';
+            el.addEventListener('focus', function() {
+                setTimeout(() => {
+                    this.value = '';
+                }, 0);
             });
         }
     });
