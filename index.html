@@ -161,7 +161,7 @@
         <div class="orb orb-3"></div>
 
         <div class="welcome-content" style="width: 90%; max-width: 1200px; margin: 100px auto 40px;">
-            <h2 class="greeting" style="font-size: 2rem; margin-bottom: 2rem;">Factores del Proyecto</h2>
+            <h2 class="greeting" style="font-size: 2rem; margin-bottom: 2rem;">Cuotas del Proyecto</h2>
             <div id="factoresLoading" class="subtitle">Cargando datos...</div>
             <div class="table-container-premium">
                 <table id="factoresTable" class="premium-table">
@@ -180,12 +180,10 @@
 
     <!-- VISTA DE SERVICIOS -->
     <div id="serviciosView" style="display: none;">
-        <!-- Barra de navegación -->
         <nav class="top-nav">
             <div class="nav-left">
                 <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
-                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido -
-                    Servicios</span>
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - Servicios</span>
             </div>
             <ul class="nav-links">
                 <li><a href="#" class="to-home nav-link">Inicio</a></li>
@@ -197,33 +195,113 @@
                 style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
         </nav>
 
-        <div class="orb orb-1"></div>
+        <div class="orb orb-1" style="pointer-events: none;"></div>
 
-        <div class="welcome-content" style="width: 90%; max-width: 600px; margin: 100px auto 40px;">
+        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
             <div class="calculator-card">
-                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 1.5rem;">Servicios</h2>
-                <p class="subtitle" style="margin-bottom: 2rem;">Ingresa los valores para comenzar el cálculo.</p>
 
-                <div class="calc-row">
-                    <div class="calc-group">
-                        <label for="input_servicio">Servicio</label>
-                        <input type="number" id="input_servicio" placeholder="0" step="1">
-                    </div>
+                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">Servicios</h2>
+                <p id="serviciosUserLabel" class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Cargando usuario...</p>
 
-                    <div class="calc-group">
-                        <label for="nuevo_valor">Kg/Vol</label>
-                        <input type="number" id="nuevo_valor" placeholder="0.00" step="0.01">
-                    </div>
+                <!-- Estado de carga -->
+                <div id="serviciosLoading" style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
+                    Consultando datos...
                 </div>
 
-                <div class="calc-divider"></div>
+                <!-- Resultados -->
+                <div id="serviciosResultado" style="display: none;">
 
-                <div class="calc-row">
-                    <div class="calc-group" style="margin-bottom: 0;">
-                        <label for="val_tot">Valor Total</label>
-                        <input type="text" id="val_tot" placeholder="0.00" disabled>
+                    <!-- FONDO A -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                        <p style="color:rgba(255,255,255,0.45); font-size:0.72rem; text-transform:uppercase;
+                            letter-spacing:1.2px; margin:0;">Fondo A</p>
+                        <button id="btnGraficoA" style="
+                            display:flex; align-items:center; gap:0.35rem;
+                            background:rgba(165,180,252,0.15); border:1px solid rgba(165,180,252,0.35);
+                            color:#a5b4fc; border-radius:8px; padding:0.3rem 0.8rem;
+                            font-size:0.75rem; font-family:'Inter',sans-serif; cursor:pointer;
+                            transition:background 0.2s;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            </svg>
+                            Ver gráfica
+                        </button>
                     </div>
-                    <button id="ejec" class="btn-ejec">Ejec</button>
+
+                    <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.2rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;
+                            background:rgba(255,255,255,0.05); border-radius:10px; padding:0.7rem 1.1rem;
+                            border:1px solid rgba(255,255,255,0.08);">
+                            <span style="color:rgba(255,255,255,0.6); font-size:0.85rem;">Valor cuota Fondo A</span>
+                            <span id="svc_fondo_a" style="font-weight:600; color:#a5b4fc;">—</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;
+                            background:rgba(255,255,255,0.05); border-radius:10px; padding:0.7rem 1.1rem;
+                            border:1px solid rgba(255,255,255,0.08);">
+                            <span style="color:rgba(255,255,255,0.6); font-size:0.85rem;">Cuotas Fondo A</span>
+                            <span id="svc_cta_fondo_a" style="font-weight:600; color:#a5b4fc;">—</span>
+                        </div>
+                    </div>
+
+                    <div style="text-align:center; margin-bottom:1.5rem;">
+                        <p style="color:rgba(255,255,255,0.45); font-size:0.72rem; text-transform:uppercase;
+                            letter-spacing:1.2px; margin-bottom:0.3rem;">Saldo estimado Fondo A</p>
+                        <p id="svc_total_a" style="font-size:2.2rem; font-weight:700; margin:0;
+                            background:linear-gradient(to right,#a5b4fc,#7c3aed);
+                            -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">—</p>
+                    </div>
+
+                    <!-- FONDO C (se muestra solo si cta_fondo_c > 0) -->
+                    <div id="svc_bloque_c" style="display:none;">
+                        <div class="calc-divider" style="margin: 0.5rem 0 1.2rem;"></div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                            <p style="color:rgba(255,255,255,0.45); font-size:0.72rem; text-transform:uppercase;
+                                letter-spacing:1.2px; margin:0;">Fondo C</p>
+                            <button id="btnGraficoC" style="
+                                display:flex; align-items:center; gap:0.35rem;
+                                background:rgba(110,231,183,0.15); border:1px solid rgba(110,231,183,0.35);
+                                color:#6ee7b7; border-radius:8px; padding:0.3rem 0.8rem;
+                                font-size:0.75rem; font-family:'Inter',sans-serif; cursor:pointer;
+                                transition:background 0.2s;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                </svg>
+                                Ver gráfica
+                            </button>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.2rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;
+                                background:rgba(255,255,255,0.05); border-radius:10px; padding:0.7rem 1.1rem;
+                                border:1px solid rgba(255,255,255,0.08);">
+                                <span style="color:rgba(255,255,255,0.6); font-size:0.85rem;">Valor cuota Fondo C</span>
+                                <span id="svc_fondo_c" style="font-weight:600; color:#6ee7b7;">—</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;
+                                background:rgba(255,255,255,0.05); border-radius:10px; padding:0.7rem 1.1rem;
+                                border:1px solid rgba(255,255,255,0.08);">
+                                <span style="color:rgba(255,255,255,0.6); font-size:0.85rem;">Cuotas Fondo C</span>
+                                <span id="svc_cta_fondo_c" style="font-weight:600; color:#6ee7b7;">—</span>
+                            </div>
+                        </div>
+
+                        <div style="text-align:center; margin-bottom:1rem;">
+                            <p style="color:rgba(255,255,255,0.45); font-size:0.72rem; text-transform:uppercase;
+                                letter-spacing:1.2px; margin-bottom:0.3rem;">Saldo estimado Fondo C</p>
+                            <p id="svc_total_c" style="font-size:2.2rem; font-weight:700; margin:0;
+                                background:linear-gradient(to right,#6ee7b7,#059669);
+                                -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">—</p>
+                        </div>
+                    </div>
+
+                    <!-- Error -->
+                    <div id="serviciosError" style="display:none; margin-top:1rem; color:#f87171;
+                        background:rgba(248,113,113,0.1); border-radius:8px; padding:0.75rem 1rem;
+                        font-size:0.85rem; text-align:center;"></div>
+
                 </div>
             </div>
         </div>
@@ -264,7 +342,7 @@
                     <input type="text" id="cuprumBuscar" class="cuprum-search" placeholder="Filtrar por fecha...">
                 </div>
             </div>
-            <div id="cuprumLoading" class="subtitle">Cargando datos de Cuprum...</div>
+  <div id="cuprumLoading" class="subtitle">Cargando datos de Cuprum...</div>
             <div class="table-container-premium">
                 <table id="cuprumTable" class="premium-table cuprum-table">
                     <thead>
@@ -277,7 +355,111 @@
                     </tbody>
                 </table>
             </div>
+            <!-- Controles de Paginación Cuprum -->
+            <div id="cuprumPagination" style="display: none; margin-top: 1.5rem; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <button id="cuprumPrevBtn" style="
+                    display: flex; align-items: center; gap: 0.4rem;
+                    padding: 0.5rem 1.2rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+                    background: rgba(255,255,255,0.07); color: #fff; font-family: 'Inter', sans-serif;
+                    font-size: 0.9rem; cursor: pointer; transition: background 0.2s, opacity 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    Anterior
+                </button>
+                <span id="cuprumPageIndicator" style="
+                    font-family: 'Inter', sans-serif; font-size: 0.9rem;
+                    color: rgba(255,255,255,0.7); min-width: 120px; text-align: center;">
+                    Pág. 1 de 1
+                </span>
+                <button id="cuprumNextBtn" style="
+                    display: flex; align-items: center; gap: 0.4rem;
+                    padding: 0.5rem 1.2rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+                    background: rgba(255,255,255,0.07); color: #fff; font-family: 'Inter', sans-serif;
+                    font-size: 0.9rem; cursor: pointer; transition: background 0.2s, opacity 0.2s;">
+                    Siguiente
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
             <div id="cuprumStats" class="cuprum-stats-bar" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- VISTA DE GRÁFICO DE RENTABILIDAD -->
+    <div id="graficoView" style="display:none;">
+        <nav class="top-nav">
+            <div class="nav-left">
+                <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
+                <span id="graficoNavTitle" style="font-weight:700; color:#ffffff; font-size:1.1rem; letter-spacing:-0.5px;">Nido - Gráfica</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" id="graficoBackServicios" class="nav-link">← Volver</a></li>
+            </ul>
+            <div class="logout-btn-spa" id="logoutBtnGrafico"
+                style="padding:0.6rem 1.5rem; font-size:0.9rem; animation:none; margin:0;">Cerrar Sesión</div>
+        </nav>
+
+        <div class="orb orb-1" style="pointer-events:none;"></div>
+        <div class="orb orb-3" style="pointer-events:none;"></div>
+
+        <div style="width:90%; max-width:900px; margin:0 auto; padding-top:100px; padding-bottom:3rem;">
+
+            <!-- Encabezado -->
+            <div style="display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+                <div>
+                    <h2 id="graficoTitulo" class="greeting" style="font-size:1.8rem; margin-bottom:0.2rem;">Rentabilidad</h2>
+                    <p id="graficoSubtitulo" class="subtitle" style="margin:0; font-size:0.9rem;"></p>
+                </div>
+                <!-- Selector de mes -->
+                <div style="display:flex; align-items:center; gap:0.6rem;">
+                    <button id="graficoPrevMes" style="
+                        background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+                        color:#fff; border-radius:8px; width:32px; height:32px; font-size:1rem;
+                        cursor:pointer; display:flex; align-items:center; justify-content:center;">‹</button>
+                    <span id="graficoMesLabel" style="
+                        font-family:'Inter',sans-serif; font-size:0.9rem; color:rgba(255,255,255,0.85);
+                        min-width:120px; text-align:center; font-weight:600;"></span>
+                    <button id="graficoNextMes" style="
+                        background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+                        color:#fff; border-radius:8px; width:32px; height:32px; font-size:1rem;
+                        cursor:pointer; display:flex; align-items:center; justify-content:center;">›</button>
+                </div>
+            </div>
+
+            <!-- Tarjetas de resumen -->
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.5rem;">
+                <div style="background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1);
+                    border-radius:14px; padding:1rem 1.2rem;">
+                    <p style="color:rgba(255,255,255,0.5); font-size:0.72rem; text-transform:uppercase;
+                        letter-spacing:1px; margin-bottom:0.3rem;">Saldo inicial</p>
+                    <p id="graficoSaldoInicial" style="font-size:1.1rem; font-weight:700; margin:0; color:#fff;">—</p>
+                </div>
+                <div style="background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1);
+                    border-radius:14px; padding:1rem 1.2rem;">
+                    <p style="color:rgba(255,255,255,0.5); font-size:0.72rem; text-transform:uppercase;
+                        letter-spacing:1px; margin-bottom:0.3rem;">Saldo final</p>
+                    <p id="graficoSaldoFinal" style="font-size:1.1rem; font-weight:700; margin:0; color:#fff;">—</p>
+                </div>
+                <div style="background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1);
+                    border-radius:14px; padding:1rem 1.2rem;">
+                    <p style="color:rgba(255,255,255,0.5); font-size:0.72rem; text-transform:uppercase;
+                        letter-spacing:1px; margin-bottom:0.3rem;">Rentabilidad mes</p>
+                    <p id="graficoRentabilidad" style="font-size:1.1rem; font-weight:700; margin:0;">—</p>
+                </div>
+            </div>
+
+            <!-- Contenedor del gráfico -->
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+                border-radius:20px; padding:1.5rem; backdrop-filter:blur(20px);">
+                <div id="graficoLoading" style="text-align:center; padding:3rem 0;
+                    color:rgba(255,255,255,0.5); font-size:0.9rem;">Cargando datos...</div>
+                <canvas id="graficoCanvas" style="display:none; width:100%; max-height:380px;"></canvas>
+            </div>
+
         </div>
     </div>
 
@@ -289,6 +471,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
 

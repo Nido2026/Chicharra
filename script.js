@@ -22,6 +22,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const recoveryForm = document.getElementById('recoveryForm');
     const recoveryBtn = document.getElementById('recoveryBtn');
 
+    // ================================================================
+    // --- PAGINACIÓN CUPRUM ---
+    // Todo en un objeto local. Sin window.*, sin placeholders.
+    // ================================================================
+    const pag = { pagina: 1, porPagina: 5, datos: [] };
+
+    function cuprumRenderPagina() {
+        if (!pag.datos.length) return;
+
+        const total  = Math.ceil(pag.datos.length / pag.porPagina);
+        if (pag.pagina < 1) pag.pagina = 1;
+        if (pag.pagina > total) pag.pagina = total;
+
+        const inicio = (pag.pagina - 1) * pag.porPagina;
+        const tbody  = document.getElementById('cuprumBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        pag.datos.slice(inicio, inicio + pag.porPagina).forEach(rowHtml => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = rowHtml;
+            tbody.appendChild(tr);
+        });
+
+        // Indicador
+        const indicador = document.getElementById('cuprumPageIndicator');
+        if (indicador) indicador.textContent = 'Pág. ' + pag.pagina + ' de ' + total;
+
+        // Botón Anterior — solo visual, sin tocar pointerEvents aquí
+        const prevBtn = document.getElementById('cuprumPrevBtn');
+        if (prevBtn) {
+            prevBtn.style.opacity = pag.pagina <= 1 ? '0.35' : '1';
+        }
+        // Botón Siguiente — solo visual
+        const nextBtn = document.getElementById('cuprumNextBtn');
+        if (nextBtn) {
+            nextBtn.style.opacity = pag.pagina >= total ? '0.35' : '1';
+        }
+
+        // Mostrar barra de paginación
+        const bar = document.getElementById('cuprumPagination');
+        if (bar) bar.style.display = total > 1 ? 'flex' : 'none';
+    }
+
+    // Listeners de los botones (siempre activos, la lógica interna decide si avanza)
+    document.getElementById('cuprumPrevBtn').addEventListener('click', function () {
+        if (pag.pagina > 1) {
+            pag.pagina--;
+            cuprumRenderPagina();
+        }
+    });
+    document.getElementById('cuprumNextBtn').addEventListener('click', function () {
+        const total = Math.ceil(pag.datos.length / pag.porPagina);
+        if (pag.pagina < total) {
+            pag.pagina++;
+            cuprumRenderPagina();
+        }
+    });
+    // ================================================================
+
     // Add particles for background effect
     createParticles();
 
@@ -82,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (view === 'servicios') {
             if (serviciosView) {
                 serviciosView.style.display = 'block';
+                loadServiciosData();
             }
         } else if (view === 'cuprum') {
             if (cuprumView) {
@@ -420,9 +481,107 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- CARGAR DATOS DE LA TABLA FACTORES ---
+    // --- CARGAR DATOS DE SERVICIOS (Saldo Fondo A y Fondo C por usuario) ---
+    async function loadServiciosData() {
+        const loadingEl   = document.getElementById('serviciosLoading');
+        const resultadoEl = document.getElementById('serviciosResultado');
+        const errorEl     = document.getElementById('serviciosError');
+        const userLabel   = document.getElementById('serviciosUserLabel');
+        const bloqueC     = document.getElementById('svc_bloque_c');
+
+        if (loadingEl)   loadingEl.style.display   = 'block';
+        if (resultadoEl) resultadoEl.style.display = 'none';
+        if (errorEl)     errorEl.style.display     = 'none';
+        if (bloqueC)     bloqueC.style.display     = 'none';
+
+        const userRut  = sessionStorage.getItem('userRut');
+        const userName = sessionStorage.getItem('userName');
+
+        if (userLabel) {
+            userLabel.textContent = userName
+                ? 'RUT: ' + userRut + ' — ' + userName
+                : 'RUT: ' + (userRut || 'desconocido');
+        }
+
+        const client = getSupabaseClient();
+        if (!client) {
+            if (loadingEl) loadingEl.textContent = 'Error: cliente Supabase no disponible.';
+            return;
+        }
+
+        try {
+            // 1. Último registro cuprum (fecha más reciente) — trae fondo_a y fondo_c
+            const { data: cuprumData, error: cuprumError } = await client
+                .from('cuprum')
+                .select('fondo_a, fondo_c, fecha')
+                .order('fecha', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (cuprumError) throw new Error('Error cuprum: ' + cuprumError.message);
+
+            // 2. Cuotas del usuario — trae cta_fondo_a y cta_fondo_c
+            const { data: cuotasData, error: cuotasError } = await client
+                .from('cuotas')
+                .select('cta_fondo_a, cta_fondo_c')
+                .eq('rut', userRut)
+                .single();
+
+            if (cuotasError) throw new Error('Error cuotas: ' + cuotasError.message);
+
+            const fmt      = (n) => n.toLocaleString('es-CL', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+            const fmtPesos = (n) => '$ ' + n.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // --- FONDO A ---
+            const fondoA    = parseFloat(cuprumData.fondo_a)    || 0;
+            const ctaFondoA = parseFloat(cuotasData.cta_fondo_a) || 0;
+            const totalA    = fondoA * ctaFondoA;
+
+            document.getElementById('svc_fondo_a').textContent     = fmt(fondoA);
+            document.getElementById('svc_cta_fondo_a').textContent = fmt(ctaFondoA);
+            document.getElementById('svc_total_a').textContent     = fmtPesos(totalA);
+
+            // Botón gráfica Fondo A
+            const btnA = document.getElementById('btnGraficoA');
+            if (btnA) {
+                btnA.onclick = () => { if (window._showGrafico) window._showGrafico('a', ctaFondoA); };
+            }
+
+            // --- FONDO C (solo si cta_fondo_c > 0) ---
+            const fondoC    = parseFloat(cuprumData.fondo_c)    || 0;
+            const ctaFondoC = parseFloat(cuotasData.cta_fondo_c) || 0;
+
+            if (ctaFondoC > 0) {
+                const totalC = fondoC * ctaFondoC;
+                document.getElementById('svc_fondo_c').textContent     = fmt(fondoC);
+                document.getElementById('svc_cta_fondo_c').textContent = fmt(ctaFondoC);
+                document.getElementById('svc_total_c').textContent     = fmtPesos(totalC);
+                if (bloqueC) bloqueC.style.display = 'block';
+
+                // Botón gráfica Fondo C
+                const btnC = document.getElementById('btnGraficoC');
+                if (btnC) {
+                    btnC.onclick = () => { if (window._showGrafico) window._showGrafico('c', ctaFondoC); };
+                }
+            }
+
+            if (loadingEl)   loadingEl.style.display   = 'none';
+            if (resultadoEl) resultadoEl.style.display = 'block';
+
+        } catch (err) {
+            console.error('loadServiciosData error:', err);
+            if (loadingEl)   loadingEl.style.display   = 'none';
+            if (resultadoEl) resultadoEl.style.display = 'block';
+            if (errorEl) {
+                errorEl.style.display = 'block';
+                errorEl.textContent   = err.message;
+            }
+        }
+    }
+
+    // --- CARGAR DATOS DE LA TABLA CUOTAS ---
     async function loadFactoresData() {
-        console.log(">>> [DEBUG] Llamada a loadFactoresData()");
+        console.log(">>> [DEBUG] Llamada a loadFactoresData() → tabla cuotas");
         const loadingEl = document.getElementById('factoresLoading');
         const headerEl = document.getElementById('factoresHeader');
         const bodyEl = document.getElementById('factoresBody');
@@ -433,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         loadingEl.style.display = 'block';
-        loadingEl.innerText = 'Cargando datos de factores...';
+        loadingEl.innerText = 'Cargando datos de cuotas...';
         headerEl.innerHTML = '';
         bodyEl.innerHTML = '';
 
@@ -445,12 +604,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            console.log(">>> [DEBUG] Intentando FETCH de 'factores'...");
+            console.log(">>> [DEBUG] Intentando FETCH de 'cuotas'...");
             const { data, error, status, statusText } = await client
-                .from('factores')
+                .from('cuotas')
                 .select('*');
 
-            console.group("Diagnóstico Tabla Factores");
+            console.group("Diagnóstico Tabla Cuotas");
             console.log("HTTP Status:", status);
             console.log("Status Text:", statusText);
             console.log("Error:", error);
@@ -458,14 +617,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.groupEnd();
 
             if (error) {
-                console.error("Error al cargar factores:", error);
-                loadingEl.innerText = 'Error al cargar factores: ' + error.message + ' (Code: ' + error.code + ')';
+                console.error("Error al cargar cuotas:", error);
+                loadingEl.innerText = 'Error al cargar cuotas: ' + error.message + ' (Code: ' + error.code + ')';
                 return;
             }
 
             if (!data || data.length === 0) {
-                console.warn(">>> [DEBUG] No se devolvieron datos de la tabla 'factores'");
-                loadingEl.innerText = 'No se encontraron registros en la tabla factores. (La tabla podría estar vacía o bloqueada por RLS)';
+                console.warn(">>> [DEBUG] No se devolvieron datos de la tabla 'cuotas'");
+                loadingEl.innerText = 'No se encontraron registros en la tabla cuotas. (La tabla podría estar vacía o bloqueada por RLS)';
                 return;
             }
 
@@ -492,7 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 bodyEl.appendChild(tr);
             });
-            console.log(">>> [DEBUG] Tabla renderizada con " + data.length + " filas.");
+            console.log(">>> [DEBUG] Tabla cuotas renderizada con " + data.length + " filas.");
 
         } catch (err) {
             console.error(">>> [DEBUG] Error inesperado:", err);
@@ -580,18 +739,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Resetear a página 1 antes de renderizar con nuevo filtro
+        pag.pagina = 1;
         renderCuprumTable(filtered, fondo);
     }
 
     function renderCuprumTable(data, fondoFiltro = 'all') {
         const loadingEl = document.getElementById('cuprumLoading');
         const headerEl = document.getElementById('cuprumHeader');
-        const bodyEl = document.getElementById('cuprumBody');
         const statsEl = document.getElementById('cuprumStats');
 
         if (loadingEl) loadingEl.style.display = 'none';
         headerEl.innerHTML = '';
-        bodyEl.innerHTML = '';
 
         // Determinar columnas a mostrar
         const allCols = ['fecha', 'fondo_a', 'fondo_b', 'fondo_c', 'fondo_d', 'fondo_e'];
@@ -614,26 +773,23 @@ document.addEventListener('DOMContentLoaded', () => {
             headerEl.appendChild(th);
         });
 
-        // Filas
-        data.forEach(row => {
-            const tr = document.createElement('tr');
-            fondoCols.forEach(col => {
-                const td = document.createElement('td');
+        // Guardar filas como strings HTML y renderizar con paginación
+        pag.datos  = data.map(row =>
+            fondoCols.map(col => {
                 if (col === 'fecha') {
-                    // Formatear fecha legible
                     const d = new Date(row[col] + 'T00:00:00');
-                    td.innerText = isNaN(d.getTime()) ? (row[col] || '-') :
+                    const texto = isNaN(d.getTime()) ? (row[col] || '-') :
                         d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
-                    td.style.fontWeight = '500';
-                    td.style.color = '#c4b5fd';
+                    return '<td style="font-weight:500;color:#c4b5fd;">' + texto + '</td>';
                 } else {
                     const val = parseFloat(row[col]);
-                    td.innerText = isNaN(val) ? '-' : val.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    const texto = isNaN(val) ? '-' : val.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return '<td>' + texto + '</td>';
                 }
-                tr.appendChild(td);
-            });
-            bodyEl.appendChild(tr);
-        });
+            }).join('')
+        );
+        pag.pagina = 1;
+        cuprumRenderPagina();
 
         // Barra de estadísticas
         if (statsEl && data.length > 0 && fondoFiltro !== 'all') {
@@ -723,7 +879,247 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
+
+
+    // ================================================================
+    // --- VISTA DE GRÁFICO DE RENTABILIDAD ---
+    // ================================================================
+    let graficoChart    = null;   // instancia Chart.js activa
+    let graficoFondoActual = 'a'; // 'a' o 'c'
+    let graficoCtaCuotas   = 0;   // cuotas del usuario para el fondo activo
+    let graficoMesOffset   = 0;   // 0 = mes actual, -1 = mes anterior, etc.
+
+    // Oculta todas las vistas y muestra graficoView
+    function showGrafico(fondo, ctaCuotas) {
+        graficoFondoActual = fondo;
+        graficoCtaCuotas   = ctaCuotas;
+        graficoMesOffset   = 0;
+
+        // Ocultar todas las vistas
+        ['loginView','welcomeView','recoveryView','proyectosView',
+         'serviciosView','cuprumView'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+        const graficoView = document.getElementById('graficoView');
+        if (graficoView) graficoView.style.display = 'block';
+
+        // Título de la vista
+        const label = fondo === 'a' ? 'Fondo A' : 'Fondo C';
+        const navTitle = document.getElementById('graficoNavTitle');
+        const titulo   = document.getElementById('graficoTitulo');
+        if (navTitle) navTitle.textContent = 'Nido - Gráfica ' + label;
+        if (titulo)   titulo.textContent   = 'Rentabilidad ' + label;
+
+        // Info del usuario como subtítulo
+        const userRut  = sessionStorage.getItem('userRut');
+        const userName = sessionStorage.getItem('userName');
+        const sub = document.getElementById('graficoSubtitulo');
+        if (sub) sub.textContent = (userName ? userName + ' — ' : '') + 'RUT: ' + userRut;
+
+        cargarGraficoMes();
+    }
+
+    // Calcula año/mes según el offset actual
+    function getMesActual() {
+        const hoy = new Date();
+        hoy.setDate(1);
+        hoy.setMonth(hoy.getMonth() + graficoMesOffset);
+        return { anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 };
+    }
+
+    // Formatea pesos CLP
+    function fmtPesoGrafico(n) {
+        return '$ ' + n.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    async function cargarGraficoMes() {
+        const loadingEl = document.getElementById('graficoLoading');
+        const canvas    = document.getElementById('graficoCanvas');
+        if (loadingEl) { loadingEl.style.display = 'block'; loadingEl.textContent = 'Cargando datos...'; }
+        if (canvas)    canvas.style.display = 'none';
+
+        // Destruir gráfico anterior si existe
+        if (graficoChart) { graficoChart.destroy(); graficoChart = null; }
+
+        const { anio, mes } = getMesActual();
+        const mesNombres = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                            'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        const mesLabel = document.getElementById('graficoMesLabel');
+        if (mesLabel) mesLabel.textContent = mesNombres[mes - 1] + ' ' + anio;
+
+        // Bloquear botón "siguiente" si ya estamos en el mes actual
+        const nextBtn = document.getElementById('graficoNextMes');
+        if (nextBtn) nextBtn.style.opacity = graficoMesOffset >= 0 ? '0.35' : '1';
+
+        const client = getSupabaseClient();
+        if (!client) {
+            if (loadingEl) loadingEl.textContent = 'Error: Supabase no disponible.';
+            return;
+        }
+
+        try {
+            // Primer y último día del mes
+            const primerDia = anio + '-' + String(mes).padStart(2,'0') + '-01';
+            const ultimoDia = new Date(anio, mes, 0); // día 0 del mes siguiente = último del mes
+            const ultimoDiaStr = anio + '-' + String(mes).padStart(2,'0') + '-' +
+                                 String(ultimoDia.getDate()).padStart(2,'0');
+
+            const campoFondo = 'fondo_' + graficoFondoActual;
+
+            const { data, error } = await client
+                .from('cuprum')
+                .select('fecha, ' + campoFondo)
+                .gte('fecha', primerDia)
+                .lte('fecha', ultimoDiaStr)
+                .order('fecha', { ascending: true });
+
+            if (error) throw new Error(error.message);
+            if (!data || data.length === 0) {
+                if (loadingEl) loadingEl.textContent = 'Sin datos para este mes.';
+                return;
+            }
+
+            // Calcular saldo diario = cuota_fondo × cuotas_usuario
+            const labels  = data.map(r => {
+                const [,, d] = r.fecha.split('-');
+                return Number(d) + '/' + String(mes).padStart(2,'0');
+            });
+            const saldos  = data.map(r => parseFloat(r[campoFondo]) * graficoCtaCuotas);
+
+            const saldoInicial = saldos[0];
+            const saldoFinal   = saldos[saldos.length - 1];
+            const rentPct      = ((saldoFinal - saldoInicial) / saldoInicial * 100);
+            const positivo     = rentPct >= 0;
+
+            // Tarjetas resumen
+            const elIni  = document.getElementById('graficoSaldoInicial');
+            const elFin  = document.getElementById('graficoSaldoFinal');
+            const elRent = document.getElementById('graficoRentabilidad');
+            if (elIni)  elIni.textContent  = fmtPesoGrafico(saldoInicial);
+            if (elFin)  elFin.textContent  = fmtPesoGrafico(saldoFinal);
+            if (elRent) {
+                elRent.textContent = (positivo ? '+' : '') + rentPct.toFixed(2) + '%';
+                elRent.style.color = positivo ? '#34d399' : '#f87171';
+            }
+
+            // Color según fondo
+            const colorLinea  = graficoFondoActual === 'a' ? '#a5b4fc' : '#6ee7b7';
+            const colorGrad1  = graficoFondoActual === 'a' ? 'rgba(165,180,252,0.35)' : 'rgba(110,231,183,0.35)';
+            const colorGrad2  = graficoFondoActual === 'a' ? 'rgba(165,180,252,0.02)' : 'rgba(110,231,183,0.02)';
+
+            // Dibujar gráfico
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (canvas)    canvas.style.display    = 'block';
+
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 380);
+            gradient.addColorStop(0, colorGrad1);
+            gradient.addColorStop(1, colorGrad2);
+
+            graficoChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Saldo ' + (graficoFondoActual === 'a' ? 'Fondo A' : 'Fondo C'),
+                        data: saldos,
+                        borderColor: colorLinea,
+                        backgroundColor: gradient,
+                        borderWidth: 2.5,
+                        pointRadius: data.length <= 15 ? 4 : 2,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: colorLinea,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15,23,42,0.92)',
+                            titleColor: 'rgba(255,255,255,0.6)',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: (ctx) => '  ' + fmtPesoGrafico(ctx.parsed.y)
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: {
+                                color: 'rgba(255,255,255,0.45)',
+                                font: { size: 11 },
+                                maxTicksLimit: 16
+                            }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: {
+                                color: 'rgba(255,255,255,0.45)',
+                                font: { size: 11 },
+                                callback: (v) => fmtPesoGrafico(v)
+                            }
+                        }
+                    }
+                }
+            });
+
+        } catch (err) {
+            console.error('cargarGraficoMes error:', err);
+            if (loadingEl) loadingEl.textContent = 'Error: ' + err.message;
+        }
+    }
+
+    // Botones de mes anterior / siguiente
+    const graficoPrevMes = document.getElementById('graficoPrevMes');
+    const graficoNextMes = document.getElementById('graficoNextMes');
+    if (graficoPrevMes) {
+        graficoPrevMes.addEventListener('click', () => {
+            graficoMesOffset--;
+            cargarGraficoMes();
+        });
+    }
+    if (graficoNextMes) {
+        graficoNextMes.addEventListener('click', () => {
+            if (graficoMesOffset < 0) { graficoMesOffset++; cargarGraficoMes(); }
+        });
+    }
+
+    // Botón volver a Servicios
+    const graficoBack = document.getElementById('graficoBackServicios');
+    if (graficoBack) {
+        graficoBack.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('graficoView').style.display = 'none';
+            showView('servicios');
+        });
+    }
+
+    // Logout desde gráfico
+    const logoutBtnGrafico = document.getElementById('logoutBtnGrafico');
+    if (logoutBtnGrafico) {
+        logoutBtnGrafico.addEventListener('click', () => {
+            sessionStorage.clear();
+            document.getElementById('graficoView').style.display = 'none';
+            showView('login');
+        });
+    }
+
+    // Exponer showGrafico para los botones de Servicios
+    window._showGrafico = showGrafico;
+    // ================================================================
+
+}); // fin DOMContentLoaded
 
 function createParticles() {
     const body = document.querySelector('body');
