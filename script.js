@@ -173,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (view === 'cuotasfmutuos') {
             if (cuotasfmutuosView) {
                 cuotasfmutuosView.style.display = 'block';
+                loadCfmData();
             }
         } else if (view === 'valordap') {
             if (valordapView) valordapView.style.display = 'block';
@@ -200,13 +201,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Logout BCI
     const logoutBtnbci = document.getElementById('logoutBtnbci');
     if (logoutBtnbci) {
-        logoutBtnbci.addEventListener('click', () => { sessionStorage.clear(); showView('login'); });
+        logoutBtnbci.addEventListener('click', () => { doLogout(); });
     }
 
     // Logout BanChile
     const logoutBtnbanchile = document.getElementById('logoutBtnbanchile');
     if (logoutBtnbanchile) {
-        logoutBtnbanchile.addEventListener('click', () => { sessionStorage.clear(); showView('login'); });
+        logoutBtnbanchile.addEventListener('click', () => { doLogout(); });
     }
     // Manejar clics en "Inicio" desde otras vistas
     document.querySelectorAll('.to-home').forEach(link => {
@@ -255,8 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtnDap = document.getElementById('logoutBtnDap');
     if (logoutBtnDap) {
         logoutBtnDap.addEventListener('click', () => {
-            sessionStorage.clear();
-            showView('login');
+            doLogout();
         });
     }
 
@@ -270,8 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtnFmutuos = document.getElementById('logoutBtnFmutuos');
     if (logoutBtnFmutuos) {
         logoutBtnFmutuos.addEventListener('click', () => {
-            sessionStorage.clear();
-            showView('login');
+            doLogout();
         });
     }
 
@@ -282,8 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtnCuotasFM = document.getElementById('logoutBtnCuotasFM');
     if (logoutBtnCuotasFM) {
         logoutBtnCuotasFM.addEventListener('click', () => {
-            sessionStorage.clear();
-            showView('login');
+            doLogout();
         });
     }
 
@@ -294,8 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtnValorDap = document.getElementById('logoutBtnValorDap');
     if (logoutBtnValorDap) {
         logoutBtnValorDap.addEventListener('click', () => {
-            sessionStorage.clear();
-            showView('login');
+            doLogout();
         });
     }
 
@@ -308,32 +305,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            sessionStorage.clear();
-            showView('login');
+            doLogout();
         });
     }
 
     const logoutBtnProyectos = document.getElementById('logoutBtnProyectos');
     if (logoutBtnProyectos) {
         logoutBtnProyectos.addEventListener('click', () => {
-            sessionStorage.clear();
-            showView('login');
+            doLogout();
         });
     }
 
     const logoutBtnServicios = document.getElementById('logoutBtnServicios');
     if (logoutBtnServicios) {
         logoutBtnServicios.addEventListener('click', () => {
-            sessionStorage.clear();
-            showView('login');
+            doLogout();
         });
     }
 
     const logoutBtnCuprum = document.getElementById('logoutBtnCuprum');
     if (logoutBtnCuprum) {
         logoutBtnCuprum.addEventListener('click', () => {
-            sessionStorage.clear();
-            showView('login');
+            doLogout();
         });
     }
 
@@ -713,9 +706,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             console.log(">>> [DEBUG] Intentando FETCH de 'cuotas'...");
+            const userRut = sessionStorage.getItem('userRut') || '';
             const { data, error, status, statusText } = await client
                 .from('cuotas')
-                .select('*');
+                .select('*')
+                .eq('rut', userRut);
 
             console.group("Diagnóstico Tabla Cuotas");
             console.log("HTTP Status:", status);
@@ -765,6 +760,16 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(">>> [DEBUG] Error inesperado:", err);
             loadingEl.innerText = 'Ocurrió un error inesperado al cargar los datos.';
         }
+    }
+
+    // --- LOGOUT CENTRALIZADO (limpia sesión y cachés de datos) ---
+    function doLogout() {
+        // Limpiar cachés para que otro usuario no vea datos del anterior
+        cuprumAllData = [];
+        cfmAllData    = [];
+        cfmCachedRut  = null;
+        sessionStorage.clear();
+        showView('login');
     }
 
     // --- CARGAR DATOS DE AFP CUPRUM ---
@@ -923,6 +928,161 @@ document.addEventListener('DOMContentLoaded', () => {
             statsEl.style.display = 'flex';
         }
     }
+
+    // --- CARGAR DATOS DE CUOTAS FONDOS MUTUOS ---
+    let cfmAllData = [];
+    let cfmCachedRut = null; // RUT del usuario cuyos datos están en caché
+    const cfmPag = { pagina: 1, porPagina: 20, datos: [] };
+
+    // Columnas reales de la tabla cuotas_fondos_mutuos
+    const CFM_COLS   = ['run', 'serieId', 'fecha', 'fondomutuo', 'cuotas', 'inversionIni'];
+    const CFM_LABELS = {
+        run:          'RUN',
+        serieId:      'Serie ID',
+        fecha:        'Fecha',
+        fondomutuo:   'Fondo Mutuo',
+        cuotas:       'Cuotas',
+        inversionIni: 'Inversión Ini.'
+    };
+
+    async function loadCfmData() {
+        const loadingEl = document.getElementById('cfmLoading');
+        const headerEl  = document.getElementById('cfmHeader');
+        const bodyEl    = document.getElementById('cfmBody');
+        const statsEl   = document.getElementById('cfmStats');
+
+        if (!loadingEl || !headerEl || !bodyEl) return;
+
+        const currentRut = sessionStorage.getItem('userRut') || '';
+        // Invalidar caché si el usuario cambió
+        if (cfmCachedRut !== null && cfmCachedRut !== currentRut) {
+            cfmAllData = [];
+            cfmCachedRut = null;
+        }
+        if (cfmAllData.length > 0) { renderCfmTable(cfmAllData); return; }
+
+        loadingEl.style.display = 'block';
+        loadingEl.innerText = 'Cargando datos de Fondos Mutuos...';
+        headerEl.innerHTML = '';
+        bodyEl.innerHTML = '';
+        if (statsEl) statsEl.style.display = 'none';
+
+        const client = getSupabaseClient();
+        if (!client) { loadingEl.innerText = 'Error: Cliente Supabase no disponible.'; return; }
+
+        try {
+            const userRut = sessionStorage.getItem('userRut') || '';
+            let query = client
+                .from('cuotas_fondos_mutuos')
+                .select('*')
+                .order('fecha', { ascending: false });
+            if (userRut) query = query.eq('rut', userRut);
+
+            const { data, error } = await query;
+
+            if (error) { loadingEl.innerText = 'Error al cargar datos: ' + error.message; return; }
+            if (!data || data.length === 0) { loadingEl.innerText = 'No se encontraron registros para este usuario.'; return; }
+
+            cfmAllData = data;
+            cfmCachedRut = currentRut;
+            renderCfmTable(data);
+
+            const fondoInput = document.getElementById('cfmBuscarFondo');
+            if (fondoInput) fondoInput.addEventListener('input', applyCfmFilters);
+
+        } catch (err) {
+            loadingEl.innerText = 'Error inesperado al cargar datos.';
+            console.error(err);
+        }
+    }
+
+    function applyCfmFilters() {
+        const fondo = ((document.getElementById('cfmBuscarFondo') || {}).value || '').trim().toLowerCase();
+        let filtered = cfmAllData;
+        if (fondo) filtered = filtered.filter(r => String(r.fondomutuo || '').toLowerCase().includes(fondo));
+        cfmPag.pagina = 1;
+        renderCfmTable(filtered);
+    }
+
+    function renderCfmTable(data) {
+        const loadingEl = document.getElementById('cfmLoading');
+        const headerEl  = document.getElementById('cfmHeader');
+        const statsEl   = document.getElementById('cfmStats');
+
+        if (loadingEl) loadingEl.style.display = 'none';
+        headerEl.innerHTML = '';
+
+        CFM_COLS.forEach(col => {
+            const th = document.createElement('th');
+            th.innerText = CFM_LABELS[col] || col;
+            headerEl.appendChild(th);
+        });
+
+        cfmPag.datos = data.map(row =>
+            CFM_COLS.map(col => {
+                if (col === 'fecha') {
+                    const parts = String(row[col] || '').split('-');
+                    const txt = parts.length === 3
+                        ? parts[2] + '/' + parts[1] + '/' + parts[0]
+                        : (row[col] || '-');
+                    return '<td style="font-weight:500;color:#c4b5fd;">' + txt + '</td>';
+                } else if (col === 'fondomutuo') {
+                    return '<td style="font-size:0.82rem;color:rgba(255,255,255,0.9);">' + (row[col] || '-') + '</td>';
+                } else if (col === 'cuotas') {
+                    const val = parseFloat(row[col]);
+                    const txt = isNaN(val) ? (row[col] || '-') :
+                        val.toLocaleString('es-CL', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+                    return '<td style="text-align:right;">' + txt + '</td>';
+                } else if (col === 'inversionIni') {
+                    const val = parseFloat(row[col]);
+                    const txt = isNaN(val) ? (row[col] || '-') :
+                        val.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                    return '<td style="text-align:right;">' + txt + '</td>';
+                } else {
+                    return '<td>' + (row[col] || '-') + '</td>';
+                }
+            }).join('')
+        );
+        cfmPag.pagina = 1;
+        cfmRenderPagina();
+
+        if (statsEl) {
+            statsEl.innerHTML = '<span>\u{1F4CA} <strong>' + data.length + '</strong> registros cargados</span>';
+            statsEl.style.display = 'flex';
+        }
+    }
+
+    function cfmRenderPagina() {
+        const bodyEl       = document.getElementById('cfmBody');
+        const paginationEl = document.getElementById('cfmPagination');
+        const indicatorEl  = document.getElementById('cfmPageIndicator');
+        const prevBtn      = document.getElementById('cfmPrevBtn');
+        const nextBtn      = document.getElementById('cfmNextBtn');
+        if (!bodyEl) return;
+
+        const total   = cfmPag.datos.length;
+        const pages   = Math.max(1, Math.ceil(total / cfmPag.porPagina));
+        cfmPag.pagina = Math.min(Math.max(cfmPag.pagina, 1), pages);
+        const start   = (cfmPag.pagina - 1) * cfmPag.porPagina;
+
+        bodyEl.innerHTML = cfmPag.datos.slice(start, start + cfmPag.porPagina)
+            .map(r => '<tr>' + r + '</tr>').join('');
+
+        if (paginationEl) paginationEl.style.display = pages > 1 ? 'flex' : 'none';
+        if (indicatorEl)  indicatorEl.innerText = 'Pág. ' + cfmPag.pagina + ' de ' + pages;
+        if (prevBtn) { prevBtn.disabled = cfmPag.pagina <= 1; prevBtn.style.opacity = cfmPag.pagina <= 1 ? '0.4' : '1'; }
+        if (nextBtn) { nextBtn.disabled = cfmPag.pagina >= pages; nextBtn.style.opacity = cfmPag.pagina >= pages ? '0.4' : '1'; }
+
+        if (prevBtn && !prevBtn._cfmBound) {
+            prevBtn._cfmBound = true;
+            prevBtn.addEventListener('click', () => { cfmPag.pagina--; cfmRenderPagina(); });
+        }
+        if (nextBtn && !nextBtn._cfmBound) {
+            nextBtn._cfmBound = true;
+            nextBtn.addEventListener('click', () => { cfmPag.pagina++; cfmRenderPagina(); });
+        }
+    }
+
 
     // --- LOGICA DE LA PAGINA DE SERVICIOS (REINICIALIZADA) ---
     // Limpieza al recibir el foco usando setTimeout para evitar bloqueos del teclado y del foco
@@ -1217,9 +1377,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtnGrafico = document.getElementById('logoutBtnGrafico');
     if (logoutBtnGrafico) {
         logoutBtnGrafico.addEventListener('click', () => {
-            sessionStorage.clear();
             document.getElementById('graficoView').style.display = 'none';
-            showView('login');
+            doLogout();
         });
     }
 

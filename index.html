@@ -711,14 +711,53 @@
                 style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
         </nav>
         <div class="orb orb-3" style="pointer-events: none;"></div>
-        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
-            <div class="calculator-card">
-                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">Cuotas F Mutuos</h2>
-                <p class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Cuotas de Fondos Mutuos</p>
-                <div style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
-                    Módulo en construcción...
+        <div class="welcome-content" style="width: 90%; max-width: 1200px; margin: 100px auto 40px;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0;">Cuotas Fondos Mutuos</h2>
+                <div id="cfmFiltros" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-left: auto;">
+                    <input type="text" id="cfmBuscarFondo" class="cuprum-search" placeholder="Filtrar por fondo...">
                 </div>
             </div>
+            <div id="cfmLoading" class="subtitle">Cargando datos de Fondos Mutuos...</div>
+            <div class="table-container-premium">
+                <table id="cfmTable" class="premium-table cuprum-table">
+                    <thead>
+                        <tr id="cfmHeader"></tr>
+                    </thead>
+                    <tbody id="cfmBody"></tbody>
+                </table>
+            </div>
+            <!-- Paginación -->
+            <div id="cfmPagination" style="display: none; margin-top: 1.5rem; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <button id="cfmPrevBtn" style="
+                    display: flex; align-items: center; gap: 0.4rem;
+                    padding: 0.5rem 1.2rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+                    background: rgba(255,255,255,0.07); color: #fff; font-family: 'Inter', sans-serif;
+                    font-size: 0.9rem; cursor: pointer; transition: background 0.2s, opacity 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    Anterior
+                </button>
+                <span id="cfmPageIndicator" style="
+                    font-family: 'Inter', sans-serif; font-size: 0.9rem;
+                    color: rgba(255,255,255,0.7); min-width: 120px; text-align: center;">
+                    Pág. 1 de 1
+                </span>
+                <button id="cfmNextBtn" style="
+                    display: flex; align-items: center; gap: 0.4rem;
+                    padding: 0.5rem 1.2rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+                    background: rgba(255,255,255,0.07); color: #fff; font-family: 'Inter', sans-serif;
+                    font-size: 0.9rem; cursor: pointer; transition: background 0.2s, opacity 0.2s;">
+                    Siguiente
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <div id="cfmStats" class="cuprum-stats-bar" style="display: none;"></div>
         </div>
     </div>
 
