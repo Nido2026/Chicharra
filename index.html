@@ -120,9 +120,36 @@
             </div>
             <ul class="nav-links">
                 <li><a href="#" class="nav-link">Inicio</a></li>
-                <li><a href="#" class="nav-link">Servicios</a></li>
-                <li><a href="#" id="toProyectos" class="nav-link">Proyectos</a></li>
-                <li><a href="#" id="toCuprum" class="nav-link">Cuprum</a></li>
+                <li class="nav-dropdown" id="ddWelcome">
+                    <span class="nav-dropdown-toggle">Inversión
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="servicios">Cuenta 2</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="fmutuos">F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="dap">DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddCuotasWelcome">
+                    <span class="nav-dropdown-toggle">Cuotas
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="proyectos">Cuotas AFP</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="cuotasfmutuos">Cuotas F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="valordap">Valor DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddBasesWelcome">
+                    <span class="nav-dropdown-toggle">Bases
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="cuprum">Cuprum</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="bci">BCI</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="banchile">BanChile</a>
+                    </div>
+                </li>
                 <li><a href="#" class="nav-link">Nosotros</a></li>
                 <li><a href="#" class="nav-link">Contacto</a></li>
             </ul>
@@ -135,8 +162,8 @@
         <div class="orb orb-3"></div>
 
         <div class="welcome-content">
-            <h1 class="greeting" id="userGreeting">Welcome</h1>
-            <p class="welcome-subtitle">¡Has iniciado Nido!</p>
+            <h1 class="greeting" id="userGreeting">Inversiones</h1>
+            <p class="welcome-subtitle" id="userNameLabel"></p>
         </div>
     </div>
 
@@ -146,13 +173,30 @@
         <nav class="top-nav">
             <div class="nav-left">
                 <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
-                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido -
-                    Proyectos</span>
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - Cuotas AFP</span>
             </div>
             <ul class="nav-links">
                 <li><a href="#" class="to-home nav-link">Inicio</a></li>
-                <li><a href="#" class="nav-link active">Proyectos</a></li>
-                <li><a href="#" id="toCuprumProyectos" class="nav-link">Cuprum</a></li>
+                <li class="nav-dropdown" id="ddCuotasProyectos">
+                    <span class="nav-dropdown-toggle active">Cuotas
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item active" data-goto="proyectos">Cuotas AFP</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="cuotasfmutuos">Cuotas F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="valordap">Valor DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddBasesProyectos">
+                    <span class="nav-dropdown-toggle">Bases
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="cuprum">Cuprum</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="bci">BCI</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="banchile">BanChile</a>
+                    </div>
+                </li>
             </ul>
             <div class="logout-btn-spa" id="logoutBtnProyectos"
                 style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
@@ -187,9 +231,36 @@
             </div>
             <ul class="nav-links">
                 <li><a href="#" class="to-home nav-link">Inicio</a></li>
-                <li><a href="#" class="nav-link active">Servicios</a></li>
-                <li><a href="#" id="toProyectosServicios" class="nav-link">Proyectos</a></li>
-                <li><a href="#" id="toCuprumServicios" class="nav-link">Cuprum</a></li>
+                <li class="nav-dropdown" id="ddServicios">
+                    <span class="nav-dropdown-toggle active">Inversión
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item active" data-goto="servicios">Cuenta 2</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="fmutuos">F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="dap">DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddCuotasServicios">
+                    <span class="nav-dropdown-toggle">Cuotas
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="proyectos">Cuotas AFP</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="cuotasfmutuos">Cuotas F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="valordap">Valor DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddBasesServicios">
+                    <span class="nav-dropdown-toggle">Bases
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="cuprum">Cuprum</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="bci">BCI</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="banchile">BanChile</a>
+                    </div>
+                </li>
             </ul>
             <div class="logout-btn-spa" id="logoutBtnServicios"
                 style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
@@ -313,13 +384,30 @@
         <nav class="top-nav">
             <div class="nav-left">
                 <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
-                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido -
-                    Cuprum</span>
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - Bases</span>
             </div>
             <ul class="nav-links">
                 <li><a href="#" class="to-home nav-link">Inicio</a></li>
-                <li><a href="#" id="toProyectosCuprum" class="nav-link">Proyectos</a></li>
-                <li><a href="#" class="nav-link active">Cuprum</a></li>
+                <li class="nav-dropdown" id="ddCuotasCuprum">
+                    <span class="nav-dropdown-toggle">Cuotas
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="proyectos">Cuotas AFP</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="cuotasfmutuos">Cuotas F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="valordap">Valor DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddBasesCuprum">
+                    <span class="nav-dropdown-toggle active">Bases
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item active" data-goto="cuprum">Cuprum</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="bci">BCI</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="banchile">BanChile</a>
+                    </div>
+                </li>
             </ul>
             <div class="logout-btn-spa" id="logoutBtnCuprum"
                 style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
@@ -463,6 +551,342 @@
         </div>
     </div>
 
+    <!-- VISTA F MUTUOS -->
+    <div id="fmutuosView" style="display: none;">
+        <nav class="top-nav">
+            <div class="nav-left">
+                <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - F Mutuos</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="to-home nav-link">Inicio</a></li>
+                <li class="nav-dropdown" id="ddFmutuos">
+                    <span class="nav-dropdown-toggle active">Inversión
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="servicios">Cuenta 2</a>
+                        <a href="#" class="nav-dropdown-item active" data-goto="fmutuos">F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="dap">DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddCuotasFmutuos">
+                    <span class="nav-dropdown-toggle">Cuotas
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="proyectos">Cuotas AFP</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="cuotasfmutuos">Cuotas F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="valordap">Valor DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddBasesFmutuos">
+                    <span class="nav-dropdown-toggle">Bases
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="cuprum">Cuprum</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="bci">BCI</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="banchile">BanChile</a>
+                    </div>
+                </li>
+            </ul>
+            <div class="logout-btn-spa" id="logoutBtnFmutuos"
+                style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
+        </nav>
+
+        <div class="orb orb-1" style="pointer-events: none;"></div>
+
+        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
+            <div class="calculator-card">
+                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">F Mutuos</h2>
+                <p class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Fondos Mutuos</p>
+                <div style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
+                    Módulo en construcción...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA DAP -->
+    <div id="dapView" style="display: none;">
+        <nav class="top-nav">
+            <div class="nav-left">
+                <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - DAP</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="to-home nav-link">Inicio</a></li>
+                <li class="nav-dropdown" id="ddDap">
+                    <span class="nav-dropdown-toggle active">Inversión
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="servicios">Cuenta 2</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="fmutuos">F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item active" data-goto="dap">DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddCuotasDap">
+                    <span class="nav-dropdown-toggle">Cuotas
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="proyectos">Cuotas AFP</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="cuotasfmutuos">Cuotas F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="valordap">Valor DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddBasesDap">
+                    <span class="nav-dropdown-toggle">Bases
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="cuprum">Cuprum</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="bci">BCI</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="banchile">BanChile</a>
+                    </div>
+                </li>
+            </ul>
+            <div class="logout-btn-spa" id="logoutBtnDap"
+                style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
+        </nav>
+
+        <div class="orb orb-1" style="pointer-events: none;"></div>
+
+        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
+            <div class="calculator-card">
+                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">DAP</h2>
+                <p class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Depósito a Plazo</p>
+                <!-- Contenido DAP aquí -->
+                <div style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
+                    Módulo en construcción...
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- VISTA CUOTAS F MUTUOS -->
+    <div id="cuotasfmutuosView" style="display: none;">
+        <nav class="top-nav">
+            <div class="nav-left">
+                <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - Cuotas F Mutuos</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="to-home nav-link">Inicio</a></li>
+                <li class="nav-dropdown" id="ddCuotasCuotasFM">
+                    <span class="nav-dropdown-toggle active">Cuotas
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="proyectos">Cuotas AFP</a>
+                        <a href="#" class="nav-dropdown-item active" data-goto="cuotasfmutuos">Cuotas F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="valordap">Valor DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddInvCuotasFM">
+                    <span class="nav-dropdown-toggle">Inversión
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="servicios">Cuenta 2</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="fmutuos">F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="dap">DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddBasesCuotasFM">
+                    <span class="nav-dropdown-toggle">Bases
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="cuprum">Cuprum</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="bci">BCI</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="banchile">BanChile</a>
+                    </div>
+                </li>
+            </ul>
+            <div class="logout-btn-spa" id="logoutBtnCuotasFM"
+                style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
+        </nav>
+        <div class="orb orb-3" style="pointer-events: none;"></div>
+        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
+            <div class="calculator-card">
+                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">Cuotas F Mutuos</h2>
+                <p class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Cuotas de Fondos Mutuos</p>
+                <div style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
+                    Módulo en construcción...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA VALOR DAP -->
+    <div id="valordapView" style="display: none;">
+        <nav class="top-nav">
+            <div class="nav-left">
+                <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - Valor DAP</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="to-home nav-link">Inicio</a></li>
+                <li class="nav-dropdown" id="ddCuotasValorDap">
+                    <span class="nav-dropdown-toggle active">Cuotas
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="proyectos">Cuotas AFP</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="cuotasfmutuos">Cuotas F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item active" data-goto="valordap">Valor DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddInvValorDap">
+                    <span class="nav-dropdown-toggle">Inversión
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="servicios">Cuenta 2</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="fmutuos">F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="dap">DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddBasesValorDap">
+                    <span class="nav-dropdown-toggle">Bases
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="cuprum">Cuprum</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="bci">BCI</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="banchile">BanChile</a>
+                    </div>
+                </li>
+            </ul>
+            <div class="logout-btn-spa" id="logoutBtnValorDap"
+                style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
+        </nav>
+        <div class="orb orb-1" style="pointer-events: none;"></div>
+        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
+            <div class="calculator-card">
+                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">Valor DAP</h2>
+                <p class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Valor del Depósito a Plazo</p>
+                <div style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
+                    Módulo en construcción...
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- VISTA BCI -->
+    <div id="bciView" style="display: none;">
+        <nav class="top-nav">
+            <div class="nav-left">
+                <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - BCI</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="to-home nav-link">Inicio</a></li>
+                <li class="nav-dropdown" id="ddCuotasbci">
+                    <span class="nav-dropdown-toggle">Cuotas
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="proyectos">Cuotas AFP</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="cuotasfmutuos">Cuotas F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="valordap">Valor DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddInvbci">
+                    <span class="nav-dropdown-toggle">Inversión
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="servicios">Cuenta 2</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="fmutuos">F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="dap">DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddBasesbci">
+                    <span class="nav-dropdown-toggle active">Bases
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="cuprum">Cuprum</a>
+                        <a href="#" class="nav-dropdown-item active" data-goto="bci">BCI</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="banchile">BanChile</a>
+                    </div>
+                </li>
+            </ul>
+            <div class="logout-btn-spa" id="logoutBtnbci"
+                style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
+        </nav>
+        <div class="orb orb-2" style="pointer-events: none;"></div>
+        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
+            <div class="calculator-card">
+                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">BCI</h2>
+                <p class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Módulo BCI</p>
+                <div style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
+                    Módulo en construcción...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA BANCHILE -->
+    <div id="banchileView" style="display: none;">
+        <nav class="top-nav">
+            <div class="nav-left">
+                <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - BanChile</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="to-home nav-link">Inicio</a></li>
+                <li class="nav-dropdown" id="ddCuotasbanchile">
+                    <span class="nav-dropdown-toggle">Cuotas
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="proyectos">Cuotas AFP</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="cuotasfmutuos">Cuotas F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="valordap">Valor DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddInvbanchile">
+                    <span class="nav-dropdown-toggle">Inversión
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="servicios">Cuenta 2</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="fmutuos">F Mutuos</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="dap">DAP</a>
+                    </div>
+                </li>
+                <li class="nav-dropdown" id="ddBasesbanchile">
+                    <span class="nav-dropdown-toggle active">Bases
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                    <div class="nav-dropdown-menu">
+                        <a href="#" class="nav-dropdown-item" data-goto="cuprum">Cuprum</a>
+                        <a href="#" class="nav-dropdown-item" data-goto="bci">BCI</a>
+                        <a href="#" class="nav-dropdown-item active" data-goto="banchile">BanChile</a>
+                    </div>
+                </li>
+            </ul>
+            <div class="logout-btn-spa" id="logoutBtnbanchile"
+                style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
+        </nav>
+        <div class="orb orb-2" style="pointer-events: none;"></div>
+        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
+            <div class="calculator-card">
+                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">BanChile</h2>
+                <p class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Módulo BanChile</p>
+                <div style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
+                    Módulo en construcción...
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Etiqueta de versión global (solo visible en la vista de bienvenida) -->
     <div id="versionLabel"
         style="display: none; position: fixed; bottom: 12px; left: 16px; font-size: 11px; color: hsl(51, 100%, 50%); font-family: 'Inter', sans-serif; pointer-events: none; user-select: none; z-index: 9999;">

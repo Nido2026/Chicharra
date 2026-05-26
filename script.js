@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MIDDLEWARE: EL GUARDIA DE SEGURIDAD ---
     // Este pequeño bloque se encarga de "vigilar" las vistas protegidas.
-    const protectedViews = ['welcome', 'proyectos', 'servicios', 'cuprum']; // Lista de vistas que requieren sesión activa
+    const protectedViews = ['welcome', 'proyectos', 'servicios', 'cuprum', 'dap', 'fmutuos', 'cuotasfmutuos', 'valordap', 'bci', 'banchile'];
 
     function runMiddleware(requestedView) {
         const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
@@ -113,6 +113,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const proyectosView = document.getElementById('proyectosView');
         const serviciosView = document.getElementById('serviciosView');
         const cuprumView = document.getElementById('cuprumView');
+        const dapView = document.getElementById('dapView');
+        const fmutuosView = document.getElementById('fmutuosView');
+        const cuotasfmutuosView = document.getElementById('cuotasfmutuosView');
+        const valordapView = document.getElementById('valordapView');
+        const bciView = document.getElementById('bciView');
+        const banchileView = document.getElementById('banchileView');
         const versionLabel = document.getElementById('versionLabel');
 
         // Ocultar todo
@@ -122,15 +128,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (proyectosView) proyectosView.style.display = 'none';
         if (serviciosView) serviciosView.style.display = 'none';
         if (cuprumView) cuprumView.style.display = 'none';
+        if (dapView) dapView.style.display = 'none';
+        if (fmutuosView) fmutuosView.style.display = 'none';
+        if (cuotasfmutuosView) cuotasfmutuosView.style.display = 'none';
+        if (valordapView) valordapView.style.display = 'none';
+        if (bciView) bciView.style.display = 'none';
+        if (banchileView) banchileView.style.display = 'none';
         if (versionLabel) versionLabel.style.display = 'none';
 
         if (view === 'welcome') {
             welcomeView.style.display = 'flex';
             if (versionLabel) versionLabel.style.display = 'block';
-            // Personalizar saludo
+            // Nombre del usuario en el subtítulo
             const userName = sessionStorage.getItem('userName');
-            if (userName) {
-                document.getElementById('userGreeting').innerText = 'Bienvenido ' + userName;
+            const nameLabel = document.getElementById('userNameLabel');
+            if (nameLabel) {
+                nameLabel.innerText = userName ? userName : '¡Has iniciado Nido!';
             }
         } else if (view === 'recovery') {
             if (recoveryView) recoveryView.style.display = 'block';
@@ -149,6 +162,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 cuprumView.style.display = 'block';
                 loadCuprumData();
             }
+        } else if (view === 'dap') {
+            if (dapView) {
+                dapView.style.display = 'block';
+            }
+        } else if (view === 'fmutuos') {
+            if (fmutuosView) {
+                fmutuosView.style.display = 'block';
+            }
+        } else if (view === 'cuotasfmutuos') {
+            if (cuotasfmutuosView) {
+                cuotasfmutuosView.style.display = 'block';
+            }
+        } else if (view === 'valordap') {
+            if (valordapView) valordapView.style.display = 'block';
+        } else if (view === 'bci') {
+            if (bciView) bciView.style.display = 'block';
+        } else if (view === 'banchile') {
+            if (banchileView) banchileView.style.display = 'block';
         } else {
             loginView.style.display = 'block';
         }
@@ -161,35 +192,112 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toRecovery) toRecovery.onclick = (e) => { e.preventDefault(); showView('recovery'); };
     if (toLogin) toLogin.onclick = (e) => { e.preventDefault(); showView('login'); };
 
-    const toProyectos = document.getElementById('toProyectos');
-    if (toProyectos) toProyectos.onclick = (e) => { e.preventDefault(); showView('proyectos'); };
-
     const toProyectosServicios = document.getElementById('toProyectosServicios');
     if (toProyectosServicios) toProyectosServicios.onclick = (e) => { e.preventDefault(); showView('proyectos'); };
 
-    // Navegación a Cuprum desde distintas vistas
-    ['toCuprum', 'toCuprumProyectos', 'toCuprumServicios', 'toProyectosCuprum'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            if (id === 'toProyectosCuprum') {
-                el.onclick = (e) => { e.preventDefault(); showView('proyectos'); };
-            } else {
-                el.onclick = (e) => { e.preventDefault(); showView('cuprum'); };
-            }
-        }
-    });
+    // Navegación a Cuprum desde distintas vistas — ahora manejado por data-goto en dropdowns
 
-    // Navegación a Servicios
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.innerText === 'Servicios') {
-            link.onclick = (e) => { e.preventDefault(); showView('servicios'); };
-        }
-    });
+    // Logout BCI
+    const logoutBtnbci = document.getElementById('logoutBtnbci');
+    if (logoutBtnbci) {
+        logoutBtnbci.addEventListener('click', () => { sessionStorage.clear(); showView('login'); });
+    }
 
+    // Logout BanChile
+    const logoutBtnbanchile = document.getElementById('logoutBtnbanchile');
+    if (logoutBtnbanchile) {
+        logoutBtnbanchile.addEventListener('click', () => { sessionStorage.clear(); showView('login'); });
+    }
     // Manejar clics en "Inicio" desde otras vistas
     document.querySelectorAll('.to-home').forEach(link => {
         link.onclick = (e) => { e.preventDefault(); showView('welcome'); };
     });
+
+    // --- DROPDOWNS DE NAV ---
+    // Abrir/cerrar al hacer click en el toggle
+    document.querySelectorAll('.nav-dropdown').forEach(dd => {
+        const toggle = dd.querySelector('.nav-dropdown-toggle');
+        if (toggle) {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Cerrar otros dropdowns abiertos
+                document.querySelectorAll('.nav-dropdown.open').forEach(other => {
+                    if (other !== dd) other.classList.remove('open');
+                });
+                dd.classList.toggle('open');
+            });
+        }
+    });
+
+    // Items del dropdown navegan a la vista correspondiente
+    document.querySelectorAll('.nav-dropdown-item[data-goto]').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = item.getAttribute('data-goto');
+            // Cerrar todos los dropdowns
+            document.querySelectorAll('.nav-dropdown.open').forEach(dd => dd.classList.remove('open'));
+            showView(target);
+        });
+    });
+
+    // Cerrar dropdown al hacer click fuera
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.nav-dropdown.open').forEach(dd => dd.classList.remove('open'));
+    });
+
+    // Navegación DAP
+    const toProyectosDap = document.getElementById('toProyectosDap');
+    if (toProyectosDap) toProyectosDap.onclick = (e) => { e.preventDefault(); showView('proyectos'); };
+
+    const toCuprumDap = document.getElementById('toCuprumDap');
+    if (toCuprumDap) toCuprumDap.onclick = (e) => { e.preventDefault(); showView('cuprum'); };
+
+    const logoutBtnDap = document.getElementById('logoutBtnDap');
+    if (logoutBtnDap) {
+        logoutBtnDap.addEventListener('click', () => {
+            sessionStorage.clear();
+            showView('login');
+        });
+    }
+
+    // Navegación F Mutuos
+    const toProyectosFmutuos = document.getElementById('toProyectosFmutuos');
+    if (toProyectosFmutuos) toProyectosFmutuos.onclick = (e) => { e.preventDefault(); showView('proyectos'); };
+
+    const toCuprumFmutuos = document.getElementById('toCuprumFmutuos');
+    if (toCuprumFmutuos) toCuprumFmutuos.onclick = (e) => { e.preventDefault(); showView('cuprum'); };
+
+    const logoutBtnFmutuos = document.getElementById('logoutBtnFmutuos');
+    if (logoutBtnFmutuos) {
+        logoutBtnFmutuos.addEventListener('click', () => {
+            sessionStorage.clear();
+            showView('login');
+        });
+    }
+
+    // Navegación Cuotas F Mutuos
+    const toCuprumCuotasFM = document.getElementById('toCuprumCuotasFM');
+    if (toCuprumCuotasFM) toCuprumCuotasFM.onclick = (e) => { e.preventDefault(); showView('cuprum'); };
+
+    const logoutBtnCuotasFM = document.getElementById('logoutBtnCuotasFM');
+    if (logoutBtnCuotasFM) {
+        logoutBtnCuotasFM.addEventListener('click', () => {
+            sessionStorage.clear();
+            showView('login');
+        });
+    }
+
+    // Navegación Valor DAP
+    const toCuprumValorDap = document.getElementById('toCuprumValorDap');
+    if (toCuprumValorDap) toCuprumValorDap.onclick = (e) => { e.preventDefault(); showView('cuprum'); };
+
+    const logoutBtnValorDap = document.getElementById('logoutBtnValorDap');
+    if (logoutBtnValorDap) {
+        logoutBtnValorDap.addEventListener('click', () => {
+            sessionStorage.clear();
+            showView('login');
+        });
+    }
 
     // Verificar si ya hay una sesión activa al cargar
     if (sessionStorage.getItem('isLoggedIn') === 'true') {

@@ -628,6 +628,119 @@ body {
     border-color: rgba(255, 255, 255, 0.8);
     background: rgba(255, 255, 255, 0.1);
 }
+
+/* --- MENÚ DESPLEGABLE EN NAV --- */
+.nav-dropdown {
+    position: relative;
+}
+
+.nav-dropdown-toggle {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    padding: 8px 16px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+    background: none;
+    font-family: 'Inter', sans-serif;
+}
+
+.nav-dropdown-toggle:hover,
+.nav-dropdown.open .nav-dropdown-toggle {
+    color: #ffffff;
+    transform: scale(1.15);
+    border-color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.nav-dropdown-toggle.active {
+    border-color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-dropdown-toggle svg {
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+
+.nav-dropdown.open .nav-dropdown-toggle svg {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(124, 101, 194, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    padding: 0.5rem;
+    min-width: 160px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    z-index: 2000;
+    flex-direction: column;
+    gap: 2px;
+    animation: dropdownIn 0.2s ease;
+}
+
+.nav-dropdown.open .nav-dropdown-menu {
+    display: flex;
+}
+
+@keyframes dropdownIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Todos los dropdowns: mismo color que la barra de navegación */
+[id^="ddCuotas"] .nav-dropdown-menu,
+[id^="ddInv"] .nav-dropdown-menu,
+[id^="ddBases"] .nav-dropdown-menu,
+#ddWelcome .nav-dropdown-menu,
+#ddServicios .nav-dropdown-menu,
+#ddFmutuos .nav-dropdown-menu,
+#ddDap .nav-dropdown-menu {
+    background: rgba(124, 101, 194, 0.98);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.nav-dropdown-item {
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.55rem 1rem;
+    border-radius: 9px;
+    transition: background 0.2s, color 0.2s;
+    display: block;
+    white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+}
+
+.nav-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.nav-dropdown-item.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
 /* --- ESTILOS DE LA VISTA DE SERVICIOS (Calculadora) --- */
 #serviciosView {
     display: none;
@@ -645,11 +758,119 @@ body {
     box-sizing: border-box;
 }
 
-/* El body no debe bloquear el scroll cuando serviciosView está activo */
-body:has(#serviciosView[style*="block"]) {
+/* --- VISTA DAP --- */
+#dapView {
+    display: none;
+    width: 100%;
+    height: 100vh;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 101;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+
+body:has(#dapView[style*="block"]) {
     overflow: hidden;
 }
 
+/* --- VISTA F MUTUOS --- */
+#fmutuosView {
+    display: none;
+    width: 100%;
+    height: 100vh;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 101;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+
+body:has(#fmutuosView[style*="block"]) {
+    overflow: hidden;
+}
+
+/* --- VISTA CUOTAS F MUTUOS --- */
+#cuotasfmutuosView {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 101;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+
+body:has(#cuotasfmutuosView[style*="block"]) {
+    overflow: hidden;
+}
+
+/* --- VISTA VALOR DAP --- */
+#valordapView {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 101;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+
+body:has(#valordapView[style*="block"]) {
+    overflow: hidden;
+}
+
+/* --- VISTA BCI --- */
+#bciView {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 101;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+body:has(#bciView[style*="block"]) { overflow: hidden; }
+
+/* --- VISTA BANCHILE --- */
+#banchileView {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 101;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+body:has(#banchileView[style*="block"]) { overflow: hidden; }
+
+/* El body no debe bloquear el scroll cuando serviciosView está activo */
 .calculator-card {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(25px);
