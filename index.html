@@ -596,15 +596,47 @@
         </nav>
 
         <div class="orb orb-1" style="pointer-events: none;"></div>
+        <div class="orb orb-3" style="pointer-events: none;"></div>
 
-        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
-            <div class="calculator-card">
-                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">F Mutuos</h2>
-                <p class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Fondos Mutuos</p>
-                <div style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
-                    Módulo en construcción...
+        <div style="width: 90%; max-width: 1100px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
+
+            <!-- Encabezado -->
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:2rem;">
+                <div>
+                    <h2 class="greeting" style="font-size:2rem; margin-bottom:0.2rem;">Fondos Mutuos</h2>
+                    <p id="fmSubtitulo" class="subtitle" style="margin:0; font-size:0.9rem;">Valor total de tu inversión por fondo</p>
+                </div>
+                <!-- Filtro de mes -->
+                <div style="display:flex; align-items:center; gap:0.6rem;">
+                    <button id="fmPrevMes" style="
+                        background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+                        color:#fff; border-radius:8px; width:34px; height:34px; font-size:1.1rem;
+                        cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">‹</button>
+                    <span id="fmMesLabel" style="
+                        font-family:'Inter',sans-serif; font-size:0.95rem; color:rgba(255,255,255,0.9);
+                        min-width:130px; text-align:center; font-weight:600;"></span>
+                    <button id="fmNextMes" style="
+                        background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+                        color:#fff; border-radius:8px; width:34px; height:34px; font-size:1.1rem;
+                        cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">›</button>
                 </div>
             </div>
+
+            <!-- Estado de carga -->
+            <div id="fmLoading" style="text-align:center; padding:3rem 0; color:rgba(255,255,255,0.5); font-size:0.95rem;">
+                Cargando fondos mutuos...
+            </div>
+
+            <!-- Contenedor de tarjetas con gráficos (una por fondo) -->
+            <div id="fmChartsContainer" style="display:none; flex-direction:column; gap:2.5rem;"></div>
+
+            <!-- Sin datos -->
+            <div id="fmSinDatos" style="display:none; text-align:center; padding:3rem;
+                background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+                border-radius:20px; color:rgba(255,255,255,0.45); font-size:0.95rem;">
+                No se encontraron fondos mutuos para este usuario en el mes seleccionado.
+            </div>
+
         </div>
     </div>
 
@@ -822,7 +854,7 @@
         <nav class="top-nav">
             <div class="nav-left">
                 <img src="avatar.png" alt="Avatar" class="nav-avatar-mini">
-                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - BCI</span>
+                <span style="font-weight: 700; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.5px;">Nido - Bases</span>
             </div>
             <ul class="nav-links">
                 <li><a href="#" class="to-home nav-link">Inicio</a></li>
@@ -860,15 +892,63 @@
             <div class="logout-btn-spa" id="logoutBtnbci"
                 style="padding: 0.6rem 1.5rem; font-size: 0.9rem; animation: none; margin: 0;">Cerrar Sesión</div>
         </nav>
-        <div class="orb orb-2" style="pointer-events: none;"></div>
-        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
-            <div class="calculator-card">
-                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">BCI</h2>
-                <p class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Módulo BCI</p>
-                <div style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
-                    Módulo en construcción...
+
+        <div class="orb orb-2"></div>
+
+        <div class="welcome-content" style="width: 90%; max-width: 1200px; margin: 100px auto 40px;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0;">BCI Fondos Mutuos</h2>
+                <div id="bciFiltros" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-left: auto;">
+                    <select id="bciFondoFiltro" class="cuprum-select">
+                        <option value="all">Todos los fondos</option>
+                    </select>
+                    <input type="text" id="bciBuscar" class="cuprum-search" placeholder="Filtrar por fecha...">
                 </div>
             </div>
+            <div id="bciLoading" class="subtitle">Cargando datos de BCI...</div>
+            <div class="table-container-premium">
+                <table id="bciTable" class="premium-table cuprum-table">
+                    <thead>
+                        <tr id="bciHeader">
+                            <!-- Cabeceras dinámicas -->
+                        </tr>
+                    </thead>
+                    <tbody id="bciBody">
+                        <!-- Datos dinámicos -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Controles de Paginación BCI -->
+            <div id="bciPagination" style="display: none; margin-top: 1.5rem; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <button id="bciPrevBtn" style="
+                    display: flex; align-items: center; gap: 0.4rem;
+                    padding: 0.5rem 1.2rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+                    background: rgba(255,255,255,0.07); color: #fff; font-family: 'Inter', sans-serif;
+                    font-size: 0.9rem; cursor: pointer; transition: background 0.2s, opacity 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    Anterior
+                </button>
+                <span id="bciPageIndicator" style="
+                    font-family: 'Inter', sans-serif; font-size: 0.9rem;
+                    color: rgba(255,255,255,0.7); min-width: 120px; text-align: center;">
+                    Pág. 1 de 1
+                </span>
+                <button id="bciNextBtn" style="
+                    display: flex; align-items: center; gap: 0.4rem;
+                    padding: 0.5rem 1.2rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+                    background: rgba(255,255,255,0.07); color: #fff; font-family: 'Inter', sans-serif;
+                    font-size: 0.9rem; cursor: pointer; transition: background 0.2s, opacity 0.2s;">
+                    Siguiente
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <div id="bciStats" class="cuprum-stats-bar" style="display: none;"></div>
         </div>
     </div>
 

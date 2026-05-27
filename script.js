@@ -28,6 +28,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // ================================================================
     const pag = { pagina: 1, porPagina: 5, datos: [] };
 
+    // ================================================================
+    // --- PAGINACIÓN BCI ---
+    // ================================================================
+    const bciPag = { pagina: 1, porPagina: 5, datos: [] };
+
+    function bciRenderPagina() {
+        if (!bciPag.datos.length) return;
+
+        const total = Math.ceil(bciPag.datos.length / bciPag.porPagina);
+        if (bciPag.pagina < 1) bciPag.pagina = 1;
+        if (bciPag.pagina > total) bciPag.pagina = total;
+
+        const inicio = (bciPag.pagina - 1) * bciPag.porPagina;
+        const tbody  = document.getElementById('bciBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        bciPag.datos.slice(inicio, inicio + bciPag.porPagina).forEach(rowHtml => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = rowHtml;
+            tbody.appendChild(tr);
+        });
+
+        const indicador = document.getElementById('bciPageIndicator');
+        if (indicador) indicador.textContent = 'Pág. ' + bciPag.pagina + ' de ' + total;
+
+        const prevBtn = document.getElementById('bciPrevBtn');
+        if (prevBtn) prevBtn.style.opacity = bciPag.pagina <= 1 ? '0.35' : '1';
+
+        const nextBtn = document.getElementById('bciNextBtn');
+        if (nextBtn) nextBtn.style.opacity = bciPag.pagina >= total ? '0.35' : '1';
+
+        const bar = document.getElementById('bciPagination');
+        if (bar) bar.style.display = total > 1 ? 'flex' : 'none';
+    }
+
+    document.getElementById('bciPrevBtn').addEventListener('click', function () {
+        if (bciPag.pagina > 1) { bciPag.pagina--; bciRenderPagina(); }
+    });
+    document.getElementById('bciNextBtn').addEventListener('click', function () {
+        const total = Math.ceil(bciPag.datos.length / bciPag.porPagina);
+        if (bciPag.pagina < total) { bciPag.pagina++; bciRenderPagina(); }
+    });
+    // ================================================================
+
     function cuprumRenderPagina() {
         if (!pag.datos.length) return;
 
@@ -169,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (view === 'fmutuos') {
             if (fmutuosView) {
                 fmutuosView.style.display = 'block';
+                loadFmutuos();
             }
         } else if (view === 'cuotasfmutuos') {
             if (cuotasfmutuosView) {
@@ -178,7 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (view === 'valordap') {
             if (valordapView) valordapView.style.display = 'block';
         } else if (view === 'bci') {
-            if (bciView) bciView.style.display = 'block';
+            if (bciView) {
+                bciView.style.display = 'block';
+                loadBciData();
+            }
         } else if (view === 'banchile') {
             if (banchileView) banchileView.style.display = 'block';
         } else {
@@ -767,6 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Limpiar cachés para que otro usuario no vea datos del anterior
         cuprumAllData = [];
         cfmAllData    = [];
+        bciAllData    = [];
         cfmCachedRut  = null;
         sessionStorage.clear();
         showView('login');
@@ -774,6 +824,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CARGAR DATOS DE AFP CUPRUM ---
     let cuprumAllData = []; // caché de todos los datos
+
+    // --- DATOS BCI ---
+    let bciAllData = [];
 
     async function loadCuprumData() {
         const loadingEl = document.getElementById('cuprumLoading');
@@ -1084,6 +1137,185 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    // --- CARGAR DATOS BCI (val_fondos_mutuos) ---
+    async function loadBciData() {
+        const loadingEl = document.getElementById('bciLoading');
+        const headerEl  = document.getElementById('bciHeader');
+        const bodyEl    = document.getElementById('bciBody');
+        const statsEl   = document.getElementById('bciStats');
+
+        if (!loadingEl || !headerEl || !bodyEl) return;
+
+        // Usar caché si ya hay datos
+        if (bciAllData.length > 0) {
+            renderBciTable(bciAllData);
+            return;
+        }
+
+        loadingEl.style.display = 'block';
+        loadingEl.innerText = 'Cargando datos de BCI...';
+        headerEl.innerHTML = '';
+        bodyEl.innerHTML = '';
+        if (statsEl) statsEl.style.display = 'none';
+
+        const client = getSupabaseClient();
+        if (!client) {
+            loadingEl.innerText = 'Error: Cliente Supabase no disponible.';
+            return;
+        }
+
+        try {
+            const { data, error } = await client
+                .from('val_fondos_mutuos')
+                .select('*')
+                .order('fecha', { ascending: false });
+
+            if (error) {
+                loadingEl.innerText = 'Error al cargar BCI: ' + error.message;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                loadingEl.innerText = 'No se encontraron registros en val_fondos_mutuos.';
+                return;
+            }
+
+            bciAllData = data;
+            renderBciTable(data);
+
+            // Poblar el select de fondos con los valores únicos del campo 'fondo'
+            const fondoFiltro = document.getElementById('bciFondoFiltro');
+            if (fondoFiltro) {
+                const fondos = [...new Set(data.map(r => r.fondo).filter(Boolean))].sort();
+                fondos.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f;
+                    fondoFiltro.appendChild(opt);
+                });
+                fondoFiltro.addEventListener('change', applyBciFilters);
+            }
+
+            const buscarInput = document.getElementById('bciBuscar');
+            if (buscarInput) buscarInput.addEventListener('input', applyBciFilters);
+
+        } catch (err) {
+            loadingEl.innerText = 'Error inesperado al cargar datos de BCI.';
+            console.error(err);
+        }
+    }
+
+    function applyBciFilters() {
+        const fondoFiltro = document.getElementById('bciFondoFiltro');
+        const buscarInput = document.getElementById('bciBuscar');
+        const fondo  = fondoFiltro ? fondoFiltro.value : 'all';
+        const buscar = buscarInput ? buscarInput.value.trim().toLowerCase() : '';
+
+        let filtered = bciAllData;
+
+        if (fondo && fondo !== 'all') {
+            filtered = filtered.filter(r => r.fondo === fondo);
+        }
+        if (buscar) {
+            filtered = filtered.filter(r => {
+                const fecha = r.fecha ? String(r.fecha).toLowerCase() : '';
+                return fecha.includes(buscar);
+            });
+        }
+
+        bciPag.pagina = 1;
+        renderBciTable(filtered, fondo);
+    }
+
+    function renderBciTable(data, fondoFiltro) {
+        const loadingEl = document.getElementById('bciLoading');
+        const headerEl  = document.getElementById('bciHeader');
+        const statsEl   = document.getElementById('bciStats');
+
+        if (loadingEl) loadingEl.style.display = 'none';
+        headerEl.innerHTML = '';
+
+        // Columnas de val_fondos_mutuos: detectar dinámicamente del primer registro
+        if (!data.length) {
+            if (statsEl) { statsEl.innerHTML = '<span>📊 <strong>0</strong> registros</span>'; statsEl.style.display = 'flex'; }
+            bciPag.datos = [];
+            bciRenderPagina();
+            return;
+        }
+
+        const allCols = Object.keys(data[0]);
+
+        // Etiquetas legibles
+        const colLabels = {
+            fecha:  'Fecha',
+            fondo:  'Fondo',
+            valor:  'Valor',
+            cuota:  'Cuota',
+            nombre: 'Nombre',
+            serie:  'Serie',
+            run:    'RUN',
+            id:     'ID'
+        };
+
+        allCols.forEach(col => {
+            const th = document.createElement('th');
+            th.innerText = colLabels[col] || (col.charAt(0).toUpperCase() + col.slice(1).replace(/_/g, ' '));
+            headerEl.appendChild(th);
+        });
+
+        // Construir filas con HTML igual que Cuprum
+        bciPag.datos = data.map(row =>
+            allCols.map(col => {
+                if (col === 'fecha') {
+                    const d = new Date(String(row[col]).split('T')[0] + 'T00:00:00');
+                    const texto = isNaN(d.getTime()) ? (row[col] || '-') :
+                        d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+                    return '<td style="font-weight:500;color:#c4b5fd;">' + texto + '</td>';
+                } else if (col === 'fondo' || col === 'nombre' || col === 'serie') {
+                    return '<td style="font-size:0.82rem;color:rgba(255,255,255,0.9);">' + (row[col] || '-') + '</td>';
+                } else {
+                    const val = parseFloat(row[col]);
+                    if (!isNaN(val)) {
+                        const decimals = val % 1 !== 0 ? 4 : 0;
+                        const texto = val.toLocaleString('es-CL', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+                        return '<td style="text-align:right;">' + texto + '</td>';
+                    }
+                    return '<td>' + (row[col] !== null && row[col] !== undefined ? row[col] : '-') + '</td>';
+                }
+            }).join('')
+        );
+        bciPag.pagina = 1;
+        bciRenderPagina();
+
+        // Barra estadísticas
+        if (statsEl) {
+            const colValor = allCols.find(c => c === 'valor' || c === 'cuota') || null;
+            if (colValor && fondoFiltro && fondoFiltro !== 'all') {
+                const vals = data.map(r => parseFloat(r[colValor])).filter(v => !isNaN(v));
+                if (vals.length > 0) {
+                    const ultimo    = vals[0];
+                    const primero   = vals[vals.length - 1];
+                    const variacion = ((ultimo - primero) / primero * 100).toFixed(2);
+                    const max       = Math.max(...vals).toLocaleString('es-CL', { minimumFractionDigits: 4 });
+                    const min       = Math.min(...vals).toLocaleString('es-CL', { minimumFractionDigits: 4 });
+                    const trend     = variacion >= 0 ? '▲' : '▼';
+                    const color     = variacion >= 0 ? '#34d399' : '#f87171';
+                    statsEl.innerHTML = `
+                        <span>📊 <strong>${data.length}</strong> registros</span>
+                        <span>⬆ Máx: <strong>${max}</strong></span>
+                        <span>⬇ Mín: <strong>${min}</strong></span>
+                        <span style="color:${color}">${trend} Variación: <strong>${variacion}%</strong></span>
+                    `;
+                } else {
+                    statsEl.innerHTML = `<span>📊 <strong>${data.length}</strong> registros cargados</span>`;
+                }
+            } else {
+                statsEl.innerHTML = `<span>📊 <strong>${data.length}</strong> registros cargados</span>`;
+            }
+            statsEl.style.display = 'flex';
+        }
+    }
+
     // --- LOGICA DE LA PAGINA DE SERVICIOS (REINICIALIZADA) ---
     // Limpieza al recibir el foco usando setTimeout para evitar bloqueos del teclado y del foco
     ['input_servicio', 'nuevo_valor'].forEach(id => {
@@ -1152,6 +1384,278 @@ document.addEventListener('DOMContentLoaded', () => {
     // ================================================================
     // --- VISTA DE GRÁFICO DE RENTABILIDAD ---
     // ================================================================
+    // ================================================================
+    // --- F MUTUOS: gráficos por fondo ---
+    // ================================================================
+    let fmMesOffset   = 0;          // 0 = mes actual, -1 = anterior…
+    let fmCuotasMap   = {};         // { run: numero_cuotas }
+    let fmValoresMap  = {};         // { run: [ {fecha, val_cuota} ] }
+    let fmChartMap    = {};         // { run: Chart instance }
+    let fmDataLoaded  = false;
+
+    // Helpers de fecha
+    function fmGetMes(offset) {
+        const d = new Date();
+        d.setDate(1);
+        d.setMonth(d.getMonth() + offset);
+        return d;
+    }
+    function fmMesStr(d) {
+        return d.toLocaleDateString('es-CL', { month: 'long', year: 'numeric' });
+    }
+    function fmFmtPeso(n) {
+        return '$\u00a0' + Math.round(n).toLocaleString('es-CL');
+    }
+    function fmFmtPct(p) {
+        const col = p >= 0 ? '#34d399' : '#f87171';
+        const sym = p >= 0 ? '▲' : '▼';
+        return { text: sym + ' ' + Math.abs(p).toFixed(2) + '%', color: col };
+    }
+
+    // Paleta de colores para los fondos (cíclica)
+    const FM_COLORES = [
+        { line: '#a5b4fc', grad1: 'rgba(165,180,252,0.30)', grad2: 'rgba(165,180,252,0.02)' },
+        { line: '#6ee7b7', grad1: 'rgba(110,231,183,0.30)', grad2: 'rgba(110,231,183,0.02)' },
+        { line: '#fbbf24', grad1: 'rgba(251,191,36,0.30)',  grad2: 'rgba(251,191,36,0.02)'  },
+        { line: '#f472b6', grad1: 'rgba(244,114,182,0.30)', grad2: 'rgba(244,114,182,0.02)' },
+        { line: '#38bdf8', grad1: 'rgba(56,189,248,0.30)',  grad2: 'rgba(56,189,248,0.02)'  },
+    ];
+
+    async function loadFmutuos() {
+        const userRut = sessionStorage.getItem('userRut') || '';
+        if (!userRut) return;
+
+        const loadingEl = document.getElementById('fmLoading');
+        const container = document.getElementById('fmChartsContainer');
+        const sinDatos  = document.getElementById('fmSinDatos');
+        const mesLabel  = document.getElementById('fmMesLabel');
+        const nextBtn   = document.getElementById('fmNextMes');
+
+        // UI: estado inicial
+        if (loadingEl) { loadingEl.style.display = 'block'; loadingEl.textContent = 'Cargando fondos mutuos...'; }
+        if (container) container.style.display = 'none';
+        if (sinDatos)  sinDatos.style.display  = 'none';
+
+        // Label del mes activo
+        const mesDato = fmGetMes(fmMesOffset);
+        const mesStr  = fmMesStr(mesDato);
+        if (mesLabel) mesLabel.textContent = mesStr.charAt(0).toUpperCase() + mesStr.slice(1);
+        if (nextBtn)  nextBtn.style.opacity = fmMesOffset >= 0 ? '0.35' : '1';
+
+        const client = getSupabaseClient();
+        if (!client) {
+            if (loadingEl) loadingEl.textContent = 'Error: cliente Supabase no disponible.';
+            return;
+        }
+
+        try {
+            // ── Paso 1: cuotas del usuario filtradas por rut ─────────────────
+            const { data: cuotas, error: errC } = await client
+                .from('cuotas_fondos_mutuos')
+                .select('run, cuotas')
+                .eq('rut', userRut);
+
+            if (errC) {
+                if (loadingEl) loadingEl.textContent = 'Error cuotas: ' + errC.message;
+                return;
+            }
+            if (!cuotas || cuotas.length === 0) {
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (sinDatos)  sinDatos.style.display  = 'block';
+                return;
+            }
+
+            // mapa run → numero_cuotas  (cast a string para comparar con lo que devuelva val_fondos_mutuos)
+            const cuotasMap = {};
+            cuotas.forEach(r => { cuotasMap[String(r.run)] = parseFloat(r.cuotas) || 0; });
+            const runs = Object.keys(cuotasMap);   // array de strings
+
+            // ── Paso 2: valores para esos runs (JOIN equivalente) ────────────
+            // Traemos todo el historial; el filtro de mes lo hacemos en JS
+            // para evitar problemas de tipo entre .in() y la columna de BD.
+            const { data: valores, error: errV } = await client
+                .from('val_fondos_mutuos')
+                .select('run, fecha, val_cuota')
+                .order('fecha', { ascending: true });
+
+            if (errV) {
+                if (loadingEl) loadingEl.textContent = 'Error valores: ' + errV.message;
+                return;
+            }
+
+            // ── Paso 3: JOIN en JS + filtro de mes ──────────────────────────
+            const año  = mesDato.getFullYear();
+            const mes  = mesDato.getMonth(); // 0-based
+
+            // Agrupar por run, filtrando solo los que están en cuotasMap y en el mes elegido
+            const fondosMap = {};   // { run: { nombre, series: [{fecha,val_cuota}] } }
+
+            (valores || []).forEach(r => {
+                const key = String(r.run);
+                if (!cuotasMap.hasOwnProperty(key)) return;   // no pertenece al usuario
+
+                const d = new Date(r.fecha + 'T00:00:00');
+                if (d.getFullYear() !== año || d.getMonth() !== mes) return;  // fuera del mes
+
+                if (!fondosMap[key]) fondosMap[key] = { nombre: 'RUN ' + key, series: [] };
+                fondosMap[key].series.push({ fecha: r.fecha, val_cuota: parseFloat(r.val_cuota) || 0 });
+            });
+
+            const runsConDatos = Object.keys(fondosMap);
+
+            if (loadingEl) loadingEl.style.display = 'none';
+
+            if (runsConDatos.length === 0) {
+                if (sinDatos) sinDatos.style.display = 'block';
+                return;
+            }
+
+            // ── Paso 4: destruir charts anteriores y construir tarjetas ──────
+            Object.values(fmChartMap).forEach(ch => { try { ch.destroy(); } catch(e){} });
+            fmChartMap = {};
+
+            if (!container) return;
+            container.innerHTML = '';
+            container.style.display = 'flex';
+
+            runsConDatos.forEach((run, idx) => {
+                const color    = FM_COLORES[idx % FM_COLORES.length];
+                const nCuotas  = cuotasMap[run];
+                const info     = fondosMap[run];
+                const series   = info.series;
+
+                const labels   = series.map(s => {
+                    const d = new Date(s.fecha + 'T00:00:00');
+                    return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
+                });
+                const saldos   = series.map(s => s.val_cuota * nCuotas);
+                const saldoIni = saldos[0]  || 0;
+                const saldoFin = saldos[saldos.length - 1] || 0;
+                const rentPct  = saldoIni > 0 ? ((saldoFin - saldoIni) / saldoIni * 100) : 0;
+                const pct      = fmFmtPct(rentPct);
+                const canvasId = 'fmCanvas_' + run.replace(/[^a-z0-9]/gi, '_');
+
+                const card = document.createElement('div');
+                card.style.cssText = [
+                    'background:rgba(255,255,255,0.05)',
+                    'border:1px solid rgba(255,255,255,0.10)',
+                    'border-radius:20px',
+                    'padding:1.5rem 1.8rem 1.8rem',
+                    'backdrop-filter:blur(20px)',
+                ].join(';');
+
+                card.innerHTML =
+                    '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0.8rem;margin-bottom:1.2rem;">' +
+                        '<div>' +
+                            '<p style="font-size:0.72rem;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.45);margin:0 0 0.3rem;">Fondo</p>' +
+                            '<h3 style="margin:0;font-size:1.05rem;font-weight:700;color:' + color.line + ';word-break:break-word;">' + (info.nombre || run) + '</h3>' +
+                            '<p style="margin:0.2rem 0 0;font-size:0.78rem;color:rgba(255,255,255,0.35);">RUN: ' + run + ' &nbsp;·&nbsp; ' + nCuotas.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + ' cuotas</p>' +
+                        '</div>' +
+                        '<span style="font-size:0.88rem;font-weight:700;color:' + pct.color + ';background:' + pct.color + '22;border:1px solid ' + pct.color + '55;border-radius:8px;padding:0.3rem 0.75rem;white-space:nowrap;">' + pct.text + '</span>' +
+                    '</div>' +
+                    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin-bottom:1.4rem;">' +
+                        '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.8rem 1rem;">' +
+                            '<p style="color:rgba(255,255,255,0.45);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin:0 0 0.25rem;">Saldo inicial</p>' +
+                            '<p style="font-size:0.95rem;font-weight:700;margin:0;color:#fff;">' + fmFmtPeso(saldoIni) + '</p>' +
+                        '</div>' +
+                        '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.8rem 1rem;">' +
+                            '<p style="color:rgba(255,255,255,0.45);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin:0 0 0.25rem;">Saldo final</p>' +
+                            '<p style="font-size:0.95rem;font-weight:700;margin:0;color:#fff;">' + fmFmtPeso(saldoFin) + '</p>' +
+                        '</div>' +
+                        '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.8rem 1rem;">' +
+                            '<p style="color:rgba(255,255,255,0.45);font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;margin:0 0 0.25rem;">N° Cuotas</p>' +
+                            '<p style="font-size:0.95rem;font-weight:700;margin:0;color:#fff;">' + nCuotas.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + '</p>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="position:relative;height:280px;">' +
+                        '<canvas id="' + canvasId + '"></canvas>' +
+                    '</div>';
+
+                container.appendChild(card);
+
+                // Usar setTimeout para garantizar que el DOM está pintado antes de Chart.js
+                (function(cid, clr, lbl, sal) {
+                    setTimeout(function() {
+                        const canvas = document.getElementById(cid);
+                        if (!canvas) return;
+                        const ctx  = canvas.getContext('2d');
+                        const grad = ctx.createLinearGradient(0, 0, 0, 280);
+                        grad.addColorStop(0, clr.grad1);
+                        grad.addColorStop(1, clr.grad2);
+
+                        fmChartMap[run] = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: lbl,
+                                datasets: [{
+                                    label: 'Valor Total',
+                                    data: sal,
+                                    borderColor: clr.line,
+                                    borderWidth: 2.5,
+                                    pointRadius: sal.length > 20 ? 0 : 4,
+                                    pointHoverRadius: 6,
+                                    pointBackgroundColor: clr.line,
+                                    fill: true,
+                                    backgroundColor: grad,
+                                    tension: 0.35,
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(15,15,30,0.93)',
+                                        borderColor: clr.line,
+                                        borderWidth: 1,
+                                        titleColor: 'rgba(255,255,255,0.65)',
+                                        bodyColor: '#fff',
+                                        padding: 12,
+                                        callbacks: {
+                                            label: function(c) { return '  ' + fmFmtPeso(c.parsed.y); }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        grid: { color: 'rgba(255,255,255,0.05)' },
+                                        ticks: { color: 'rgba(255,255,255,0.45)', font: { family: 'Inter', size: 11 }, maxTicksLimit: 10, maxRotation: 0 }
+                                    },
+                                    y: {
+                                        grid: { color: 'rgba(255,255,255,0.05)' },
+                                        ticks: { color: 'rgba(255,255,255,0.45)', font: { family: 'Inter', size: 11 }, callback: function(v) { return fmFmtPeso(v); } }
+                                    }
+                                }
+                            }
+                        });
+                    }, 80);
+                }(canvasId, color, labels, saldos));
+            });
+
+        } catch(err) {
+            console.error('loadFmutuos error:', err);
+            if (loadingEl) loadingEl.textContent = 'Error inesperado: ' + (err.message || err);
+        }
+    }
+
+    // Botones de navegación de mes para F Mutuos
+    const fmPrevMes = document.getElementById('fmPrevMes');
+    const fmNextMes = document.getElementById('fmNextMes');
+    if (fmPrevMes) {
+        fmPrevMes.addEventListener('click', () => {
+            fmMesOffset--;
+            loadFmutuos();
+        });
+    }
+    if (fmNextMes) {
+        fmNextMes.addEventListener('click', () => {
+            if (fmMesOffset < 0) { fmMesOffset++; loadFmutuos(); }
+        });
+    }
+    // ================================================================
+
     let graficoChart    = null;   // instancia Chart.js activa
     let graficoFondoActual = 'a'; // 'a' o 'c'
     let graficoCtaCuotas   = 0;   // cuotas del usuario para el fondo activo
