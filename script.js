@@ -730,11 +730,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- CARGAR DATOS DE LA TABLA CUOTAS ---
+    // Columnas a mostrar y sus etiquetas legibles
+    const CUOTAS_COLS = ['rut', 'fecha', 'cta_fondo_a', 'cta_fondo_b', 'cta_fondo_c', 'cta_fondo_d', 'cta_fondo_e'];
+    const CUOTAS_LABELS = {
+        rut:         'RUT',
+        fecha:       'Fecha',
+        cta_fondo_a: 'Fondo A',
+        cta_fondo_b: 'Fondo B',
+        cta_fondo_c: 'Fondo C',
+        cta_fondo_d: 'Fondo D',
+        cta_fondo_e: 'Fondo E'
+    };
+
+    // Datos cacheados para el modal
+    let cuotasDataCache = [];
+
     async function loadFactoresData() {
         console.log(">>> [DEBUG] Llamada a loadFactoresData() → tabla cuotas");
         const loadingEl = document.getElementById('factoresLoading');
-        const headerEl = document.getElementById('factoresHeader');
-        const bodyEl = document.getElementById('factoresBody');
+        const headerEl  = document.getElementById('factoresHeader');
+        const bodyEl    = document.getElementById('factoresBody');
 
         if (!loadingEl || !headerEl || !bodyEl) {
             console.error(">>> [DEBUG] Faltan elementos DOM para la tabla");
@@ -744,65 +759,89 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingEl.style.display = 'block';
         loadingEl.innerText = 'Cargando datos de cuotas...';
         headerEl.innerHTML = '';
-        bodyEl.innerHTML = '';
+        bodyEl.innerHTML   = '';
 
         const client = getSupabaseClient();
         if (!client) {
-            console.error(">>> [DEBUG] Cliente Supabase NO inicializado");
             loadingEl.innerText = 'Error: Cliente Supabase no disponible.';
             return;
         }
 
         try {
-            console.log(">>> [DEBUG] Intentando FETCH de 'cuotas'...");
             const userRut = sessionStorage.getItem('userRut') || '';
-            const { data, error, status, statusText } = await client
+            const { data, error } = await client
                 .from('cuotas')
                 .select('*')
                 .eq('rut', userRut);
 
-            console.group("Diagnóstico Tabla Cuotas");
-            console.log("HTTP Status:", status);
-            console.log("Status Text:", statusText);
-            console.log("Error:", error);
-            console.log("Data:", data);
-            console.groupEnd();
-
             if (error) {
-                console.error("Error al cargar cuotas:", error);
-                loadingEl.innerText = 'Error al cargar cuotas: ' + error.message + ' (Code: ' + error.code + ')';
+                loadingEl.innerText = 'Error al cargar cuotas: ' + error.message;
                 return;
             }
-
             if (!data || data.length === 0) {
-                console.warn(">>> [DEBUG] No se devolvieron datos de la tabla 'cuotas'");
-                loadingEl.innerText = 'No se encontraron registros en la tabla cuotas. (La tabla podría estar vacía o bloqueada por RLS)';
+                loadingEl.innerText = 'No se encontraron registros en la tabla cuotas.';
                 return;
             }
 
-            // Ocultar mensaje de carga
+            cuotasDataCache = data;
             loadingEl.style.display = 'none';
 
-            // Generar cabeceras dinámicamente basadas en el primer registro
-            const columns = Object.keys(data[0]);
-            console.log(">>> [DEBUG] Columnas encontradas:", columns);
-            
-            columns.forEach(col => {
+            // -- Cabeceras --
+            // Detectar qué columnas de CUOTAS_COLS existen en los datos
+            const firstRow   = data[0];
+            const allKeys    = Object.keys(firstRow);
+            const visibleCols = CUOTAS_COLS.filter(c => allKeys.includes(c));
+
+            visibleCols.forEach(col => {
                 const th = document.createElement('th');
-                th.innerText = col.charAt(0).toUpperCase() + col.slice(1);
+                th.innerText = CUOTAS_LABELS[col] || col;
                 headerEl.appendChild(th);
             });
+            // Columna de acción
+            const thAcc = document.createElement('th');
+            thAcc.innerText = '';
+            headerEl.appendChild(thAcc);
 
-            // Generar filas
-            data.forEach((row, index) => {
+            // -- Filas --
+            data.forEach((row) => {
                 const tr = document.createElement('tr');
-                columns.forEach(col => {
+                visibleCols.forEach(col => {
                     const td = document.createElement('td');
-                    td.innerText = row[col] !== null ? row[col] : '-';
+                    if (col === 'fecha') {
+                        const d = new Date((row[col] || '') + 'T00:00:00');
+                        td.textContent = isNaN(d.getTime())
+                            ? (row[col] || '-')
+                            : d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' });
+                        td.style.color = '#c4b5fd';
+                        td.style.fontWeight = '600';
+                    } else if (col === 'rut') {
+                        td.textContent = row[col] || '-';
+                        td.style.color = 'rgba(255,255,255,0.6)';
+                        td.style.fontSize = '0.82rem';
+                    } else {
+                        const val = parseFloat(row[col]);
+                        td.textContent = isNaN(val) ? (row[col] !== null ? row[col] : '-')
+                            : val.toLocaleString('es-CL', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+                        td.style.textAlign = 'right';
+                    }
                     tr.appendChild(td);
                 });
+
+                // Botón editar
+                const tdBtn = document.createElement('td');
+                tdBtn.style.textAlign = 'center';
+                const btn = document.createElement('button');
+                btn.className    = 'cuotas-edit-btn';
+                btn.textContent  = '✏️';
+                btn.title        = 'Editar este registro';
+                btn.dataset.rowId = row.id ?? row.rut;  // usar 'id' si existe, si no, 'rut'
+                btn.addEventListener('click', () => openCuotasEditModal(row));
+                tdBtn.appendChild(btn);
+                tr.appendChild(tdBtn);
+
                 bodyEl.appendChild(tr);
             });
+
             console.log(">>> [DEBUG] Tabla cuotas renderizada con " + data.length + " filas.");
 
         } catch (err) {
@@ -810,6 +849,104 @@ document.addEventListener('DOMContentLoaded', () => {
             loadingEl.innerText = 'Ocurrió un error inesperado al cargar los datos.';
         }
     }
+
+    // --- ABRIR MODAL DE EDICIÓN ---
+    function openCuotasEditModal(row) {
+        document.getElementById('editRowId').value  = row.id ?? row.rut ?? '';
+        document.getElementById('editFecha').value  = row.fecha  || '';
+        document.getElementById('editFondoA').value = row.cta_fondo_a != null ? row.cta_fondo_a : '';
+        document.getElementById('editFondoB').value = row.cta_fondo_b != null ? row.cta_fondo_b : '';
+        document.getElementById('editFondoC').value = row.cta_fondo_c != null ? row.cta_fondo_c : '';
+        document.getElementById('editFondoD').value = row.cta_fondo_d != null ? row.cta_fondo_d : '';
+        document.getElementById('editFondoE').value = row.cta_fondo_e != null ? row.cta_fondo_e : '';
+
+        // Guardar referencia al rut para el UPDATE
+        document.getElementById('editRowId').dataset.rut = row.rut || '';
+
+        const msgEl = document.getElementById('cuotasEditMsg');
+        msgEl.style.display = 'none';
+        msgEl.textContent   = '';
+
+        document.getElementById('cuotasEditModal').style.display = 'flex';
+    }
+
+    // --- CERRAR MODAL ---
+    function closeCuotasEditModal() {
+        document.getElementById('cuotasEditModal').style.display = 'none';
+    }
+
+    // --- GUARDAR CAMBIOS EN SUPABASE ---
+    async function saveCuotasEdit() {
+        const saveBtn    = document.getElementById('cuotasModalSave');
+        const saveText   = saveBtn.querySelector('.cuotas-btn-save-text');
+        const saveLoader = saveBtn.querySelector('.cuotas-btn-loader');
+        const msgEl      = document.getElementById('cuotasEditMsg');
+
+        // Estado de carga
+        saveBtn.disabled      = true;
+        saveText.style.display  = 'none';
+        saveLoader.style.display = 'inline-block';
+        msgEl.style.display    = 'none';
+
+        const rowIdEl = document.getElementById('editRowId');
+        const rut     = rowIdEl.dataset.rut || sessionStorage.getItem('userRut') || '';
+
+        const payload = {
+            fecha:       document.getElementById('editFecha').value  || null,
+            cta_fondo_a: document.getElementById('editFondoA').value !== '' ? parseFloat(document.getElementById('editFondoA').value) : null,
+            cta_fondo_b: document.getElementById('editFondoB').value !== '' ? parseFloat(document.getElementById('editFondoB').value) : null,
+            cta_fondo_c: document.getElementById('editFondoC').value !== '' ? parseFloat(document.getElementById('editFondoC').value) : null,
+            cta_fondo_d: document.getElementById('editFondoD').value !== '' ? parseFloat(document.getElementById('editFondoD').value) : null,
+            cta_fondo_e: document.getElementById('editFondoE').value !== '' ? parseFloat(document.getElementById('editFondoE').value) : null,
+        };
+
+        // Eliminar nulls para no sobreescribir innecesariamente (opcional — lo dejamos para ser explícitos)
+        try {
+            const client = getSupabaseClient();
+            if (!client) throw new Error('Cliente Supabase no disponible.');
+
+            const { error } = await client
+                .from('cuotas')
+                .update(payload)
+                .eq('rut', rut);
+
+            if (error) throw new Error(error.message);
+
+            // Éxito
+            msgEl.textContent    = '✅ ¡Guardado correctamente!';
+            msgEl.className      = 'cuotas-edit-msg cuotas-edit-msg--ok';
+            msgEl.style.display  = 'block';
+
+            // Recargar tabla después de 1.2 s y cerrar modal
+            setTimeout(() => {
+                closeCuotasEditModal();
+                loadFactoresData();
+            }, 1200);
+
+        } catch (err) {
+            msgEl.textContent    = '❌ Error al guardar: ' + err.message;
+            msgEl.className      = 'cuotas-edit-msg cuotas-edit-msg--err';
+            msgEl.style.display  = 'block';
+        } finally {
+            saveBtn.disabled       = false;
+            saveText.style.display  = 'inline';
+            saveLoader.style.display = 'none';
+        }
+    }
+
+    // --- WIRING DEL MODAL ---
+    (function wireEditModal() {
+        const modal  = document.getElementById('cuotasEditModal');
+        if (!modal) return;
+        document.getElementById('cuotasModalClose').addEventListener('click',  closeCuotasEditModal);
+        document.getElementById('cuotasModalCancel').addEventListener('click', closeCuotasEditModal);
+        document.getElementById('cuotasModalSave').addEventListener('click',   saveCuotasEdit);
+        // Cerrar al hacer clic fuera del card
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeCuotasEditModal();
+        });
+    })();
+
 
     // --- LOGOUT CENTRALIZADO (limpia sesión y cachés de datos) ---
     function doLogout() {
