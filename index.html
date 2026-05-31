@@ -733,15 +733,30 @@
         </nav>
 
         <div class="orb orb-1" style="pointer-events: none;"></div>
+        <div class="orb orb-3" style="pointer-events: none;"></div>
 
-        <div class="welcome-content" style="width: 90%; max-width: 540px; margin: 0 auto; padding-top: 100px; padding-bottom: 3rem;">
-            <div class="calculator-card">
-                <h2 class="greeting" style="font-size: 2rem; margin-bottom: 0.4rem;">DAP</h2>
-                <p class="subtitle" style="margin-bottom: 2rem; font-size: 0.95rem;">Depósito a Plazo</p>
-                <!-- Contenido DAP aquí -->
-                <div style="text-align:center; padding: 2rem 0; color: rgba(255,255,255,0.5); font-size:0.9rem;">
-                    Módulo en construcción...
+        <div style="width: 95%; max-width: 1600px; margin: 0 auto; padding-top: 90px; padding-bottom: 3rem;">
+            <!-- Encabezado DAP -->
+            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+                <div>
+                    <h2 class="greeting" style="font-size:1.8rem; margin-bottom:0.2rem;">DAP</h2>
+                    <p id="dapSubtitulo" class="subtitle" style="margin:0; font-size:0.9rem; text-align:left;">Depósitos a Plazo — Calendario de vencimientos</p>
                 </div>
+            </div>
+
+            <!-- Estado de carga -->
+            <div id="dapLoading" style="text-align:center; padding:3rem 0; color:rgba(255,255,255,0.55); font-size:0.95rem;">
+                Cargando datos DAP...
+            </div>
+
+            <!-- Calendario DAP (generado por JS) -->
+            <div id="dapCalendario" style="display:none;"></div>
+
+            <!-- Sin datos -->
+            <div id="dapSinDatos" style="display:none; text-align:center; padding:3rem;
+                background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+                border-radius:20px; color:rgba(255,255,255,0.45); font-size:0.95rem;">
+                No se encontraron DAP asociados a su RUT.
             </div>
         </div>
     </div>

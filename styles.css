@@ -770,13 +770,233 @@ body {
     left: 0;
     z-index: 101;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     box-sizing: border-box;
 }
 
 body:has(#dapView[style*="block"]) {
     overflow: hidden;
+}
+
+/* ================================================================ */
+/* DAP CALENDAR STYLES                                              */
+/* ================================================================ */
+
+/* Scrollable container */
+.dap-scroll-wrap {
+    overflow-x: auto;
+    overflow-y: visible;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+}
+
+/* Scrollbar */
+.dap-scroll-wrap::-webkit-scrollbar { height: 7px; }
+.dap-scroll-wrap::-webkit-scrollbar-track { background: rgba(0,0,0,0.15); border-radius: 10px; }
+.dap-scroll-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 10px; }
+.dap-scroll-wrap::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+/* Main table */
+.dap-table {
+    border-collapse: collapse;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    width: max-content;
+    min-width: 100%;
+    color: #fff;
+}
+
+.dap-table th,
+.dap-table td {
+    border: none;
+    padding: 0;
+    white-space: nowrap;
+    vertical-align: middle;
+    text-align: center;
+}
+
+/* ── Sticky left columns ── */
+/* Background must be solid — use the view's gradient start color */
+.dap-sticky {
+    position: sticky;
+    z-index: 4;
+    background: #4845b5;   /* matches start of #dapView gradient */
+    border-right: none;
+}
+
+.dap-sticky-0 { left: 0;    min-width: 58px;  max-width: 58px; }
+.dap-sticky-1 { left: 58px; min-width: 88px;  max-width: 88px; }
+.dap-sticky-2 { left: 146px; min-width: 108px; max-width: 108px; }
+.dap-sticky-3 { left: 254px; min-width: 90px;  max-width: 90px;
+                 border-right: 1px solid rgba(255,255,255,0.15); }
+
+/* Sticky header labels (first row) */
+.dap-th-label {
+    padding: 8px 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #c4b5fd;
+    background: #3d3aaa;
+}
+
+/* Month header cells — base style */
+.dap-th-month {
+    padding: 8px 4px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #e0d9ff;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+/* Day-name row — NO background here, month color classes provide it */
+.dap-th-dayname {
+    padding: 4px 2px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.65);
+    min-width: 30px;
+    width: 30px;
+}
+
+/* Day-number row — NO background here, month color classes provide it */
+.dap-th-daynum {
+    padding: 4px 2px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.8);
+    min-width: 30px;
+    width: 30px;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+}
+
+.dap-th-empty {
+    background: #3d3aaa;
+    border-bottom: none;
+}
+
+/* ── Alternating month colors — applied to month header + dayname + daynum rows ── */
+.dap-month-even {
+    background: rgba(91,67,153,0.55);   /* lavanda oscuro */
+}
+.dap-month-odd {
+    background: rgba(29,78,216,0.50);   /* azul rey */
+}
+
+/* ── Weekend / Holiday override — must come AFTER month colors ── */
+.dap-col-sun {
+    background: rgba(239,68,68,0.40) !important;
+    color: #fca5a5 !important;
+}
+.dap-col-sat {
+    background: rgba(59,130,246,0.35) !important;
+    color: #93c5fd !important;
+}
+
+/* Subtle row divider (not a full grid) */
+.dap-data-row td {
+    height: 36px;
+    background: transparent;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.dap-row-even td:not(.dap-sticky) {
+    background: rgba(255,255,255,0.025);
+}
+
+/* Day cells */
+.dap-day-cell {
+    min-width: 30px;
+    width: 30px;
+    max-width: 30px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0;
+    overflow: visible;
+}
+
+/* ── BAR — color sólido sin degradé ── */
+.dap-bar {
+    background: rgba(56,189,248,0.82) !important;
+    position: relative;
+}
+
+.dap-bar-start {
+    border-radius: 10px 0 0 10px !important;
+    background: rgba(56,189,248,0.92) !important;
+    box-shadow: -3px 0 10px rgba(56,189,248,0.45);
+}
+
+.dap-bar-mid {
+    background: rgba(56,189,248,0.82) !important;
+}
+
+.dap-bar-end {
+    border-radius: 0 10px 10px 0 !important;
+    background: rgba(56,189,248,0.72) !important;
+    box-shadow: 3px 0 8px rgba(56,189,248,0.35);
+}
+
+/* Floating label — absolute so it never widens the column */
+.dap-bar-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    font-weight: 800;
+    font-size: 0.70rem;
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+    pointer-events: none;
+    z-index: 10;
+    letter-spacing: -0.3px;
+}
+
+/* Sticky data cells */
+.dap-td-opera {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #e0d9ff;
+    padding: 6px 8px;
+}
+
+.dap-td-vence {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.75);
+    padding: 6px 6px;
+}
+
+.dap-td-mto {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6ee7b7;
+    padding: 6px 6px;
+    text-align: right;
+}
+
+.dap-td-gana {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #fcd34d;
+    padding: 6px 6px;
+    text-align: right;
+}
+
+/* Hover highlight on data rows */
+.dap-data-row:hover td:not(.dap-bar):not(.dap-sticky) {
+    background: rgba(255,255,255,0.05) !important;
+}
+.dap-data-row:hover .dap-bar {
+    filter: brightness(1.12);
 }
 
 /* --- VISTA F MUTUOS --- */

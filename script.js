@@ -210,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (view === 'dap') {
             if (dapView) {
                 dapView.style.display = 'block';
+                loadDapData();
             }
         } else if (view === 'fmutuos') {
             if (fmutuosView) {
@@ -2025,6 +2026,294 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Exponer showGrafico para los botones de Servicios
     window._showGrafico = showGrafico;
+    // ================================================================
+
+    // ================================================================
+    // --- DAP CALENDAR ---
+    // ================================================================
+
+    const FERIADOS_CHILE = new Set([
+        // 2025
+        '2025-01-01','2025-04-18','2025-04-19','2025-05-01','2025-05-21',
+        '2025-06-29','2025-07-16','2025-08-15','2025-09-18','2025-09-19',
+        '2025-10-12','2025-10-31','2025-11-01','2025-12-08','2025-12-25',
+        // 2026
+        '2026-01-01','2026-04-03','2026-04-04','2026-05-01','2026-05-21',
+        '2026-06-29','2026-07-16','2026-08-15','2026-09-18','2026-09-19',
+        '2026-10-12','2026-10-31','2026-11-01','2026-12-08','2026-12-25',
+        // 2027
+        '2027-01-01','2027-03-26','2027-03-27','2027-05-01','2027-05-21',
+        '2027-06-29','2027-07-16','2027-08-15','2027-09-18','2027-09-19',
+        '2027-10-12','2027-10-31','2027-11-01','2027-12-08','2027-12-25',
+    ]);
+
+    function dapParseDate(str) {
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    }
+
+    function dapDateKey(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function dapAddBusinessDays(date, n) {
+        let d = new Date(date);
+        let added = 0;
+        while (added < n) {
+            d.setDate(d.getDate() + 1);
+            const dow = d.getDay();
+            const key = dapDateKey(d);
+            if (dow !== 0 && dow !== 6 && !FERIADOS_CHILE.has(key)) added++;
+        }
+        return d;
+    }
+
+    async function loadDapData() {
+        const loadingEl   = document.getElementById('dapLoading');
+        const calendarioEl = document.getElementById('dapCalendario');
+        const sinDatosEl  = document.getElementById('dapSinDatos');
+
+        if (loadingEl)    { loadingEl.style.display = 'block'; loadingEl.textContent = 'Cargando datos DAP...'; }
+        if (calendarioEl) { calendarioEl.style.display = 'none'; calendarioEl.innerHTML = ''; }
+        if (sinDatosEl)   sinDatosEl.style.display = 'none';
+
+        const userRut = sessionStorage.getItem('userRut');
+        const client  = getSupabaseClient();
+        if (!client) {
+            if (loadingEl) loadingEl.textContent = 'Error: cliente Supabase no disponible.';
+            return;
+        }
+
+        try {
+            const { data, error } = await client
+                .from('dap')
+                .select('id, opera, tipo, fec_ini, fec_venc, tasa, mto_ini, mto_fin, gana, banco, rut')
+                .eq('rut', userRut)
+                .order('fec_venc', { ascending: true });
+
+            if (error) throw new Error(error.message);
+
+            if (loadingEl) loadingEl.style.display = 'none';
+
+            if (!data || data.length === 0) {
+                if (sinDatosEl) sinDatosEl.style.display = 'block';
+                return;
+            }
+
+            buildDapCalendar(data);
+
+        } catch (err) {
+            console.error('loadDapData error:', err);
+            if (loadingEl) {
+                loadingEl.textContent = 'Error al cargar DAP: ' + err.message;
+                loadingEl.style.display = 'block';
+            }
+        }
+    }
+
+    function buildDapCalendar(records) {
+        const DIAS_ABREV  = ['do', 'lu', 'ma', 'mi', 'ju', 'vi', 'sa'];
+        const MESES_NOMBRE = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                              'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+        const fmtPesos = n => '$ ' + parseFloat(n).toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        const fmtFecha = d => {
+            const dd = String(d.getDate()).padStart(2,'0');
+            const mm = String(d.getMonth()+1).padStart(2,'0');
+            return `${dd}/${mm}/${d.getFullYear()}`;
+        };
+
+        // Enrich: compute endDate = fec_venc + 2 business days (fec_venc is day 1, total 3 days)
+        const enriched = records.map(r => {
+            const start = dapParseDate(r.fec_venc);
+            const end   = dapAddBusinessDays(start, 2);
+            return { ...r, startDate: start, endDate: end };
+        });
+
+        // Calendar date range
+        let calMin = new Date(enriched[0].startDate);
+        let calMax = new Date(enriched[0].endDate);
+        enriched.forEach(r => {
+            if (r.startDate < calMin) calMin = new Date(r.startDate);
+            if (r.endDate   > calMax) calMax = new Date(r.endDate);
+        });
+
+        // Expand to full months
+        const calStart = new Date(calMin.getFullYear(), calMin.getMonth(), 1);
+        const calEnd   = new Date(calMax.getFullYear(), calMax.getMonth() + 1, 0);
+
+        // All days in range
+        const days = [];
+        let dd = new Date(calStart);
+        while (dd <= calEnd) { days.push(new Date(dd)); dd.setDate(dd.getDate() + 1); }
+
+        // Month spans
+        const monthSpans = [];
+        days.forEach(day => {
+            const m = day.getMonth(), y = day.getFullYear();
+            if (!monthSpans.length || monthSpans[monthSpans.length-1].m !== m || monthSpans[monthSpans.length-1].y !== y)
+                monthSpans.push({ m, y, count: 1 });
+            else
+                monthSpans[monthSpans.length-1].count++;
+        });
+
+        // ── DOM BUILD ──────────────────────────────────────────────
+        const container = document.getElementById('dapCalendario');
+        container.innerHTML = '';
+
+        // Scrollable wrapper
+        const scrollWrap = document.createElement('div');
+        scrollWrap.className = 'dap-scroll-wrap';
+
+        // TABLE
+        const table = document.createElement('table');
+        table.className = 'dap-table';
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+
+        // ── HEADER ROW 1: sticky labels + month spans ──
+        const trMonths = document.createElement('tr');
+        trMonths.className = 'dap-tr-months';
+
+        // Sticky header cells
+        [['Opera','dap-th-opera'],['Vence','dap-th-vence'],['Mto Fin','dap-th-mto'],['Gana','dap-th-gana']].forEach(([lbl, cls], i) => {
+            const th = document.createElement('th');
+            th.textContent = lbl;
+            th.className = `dap-sticky dap-sticky-${i} ${cls} dap-th-label`;
+            th.rowSpan = 1;
+            trMonths.appendChild(th);
+        });
+
+        // Month span headers — alternating color per month
+        monthSpans.forEach((ms, msIdx) => {
+            const th = document.createElement('th');
+            th.colSpan = ms.count;
+            th.className = 'dap-th-month ' + (msIdx % 2 === 0 ? 'dap-month-even' : 'dap-month-odd');
+            th.textContent = MESES_NOMBRE[ms.m] + ' ' + ms.y;
+            trMonths.appendChild(th);
+        });
+        thead.appendChild(trMonths);
+
+        // Build a per-day month-index map so day rows inherit the same alternating color
+        const dayMonthIdx = new Map();
+        let mIdx = 0, curM = -1, curY = -1;
+        days.forEach(day => {
+            const m = day.getMonth(), y = day.getFullYear();
+            if (m !== curM || y !== curY) { if (curM !== -1) mIdx++; curM = m; curY = y; }
+            dayMonthIdx.set(dapDateKey(day), mIdx);
+        });
+
+        // ── HEADER ROW 2: day abbreviations ──
+        const trDayNames = document.createElement('tr');
+        trDayNames.className = 'dap-tr-daynames';
+        for (let i = 0; i < 4; i++) {
+            const th = document.createElement('th');
+            th.className = `dap-sticky dap-sticky-${i} dap-th-empty`;
+            trDayNames.appendChild(th);
+        }
+        days.forEach(day => {
+            const th  = document.createElement('th');
+            const dow = day.getDay();
+            const isH = FERIADOS_CHILE.has(dapDateKey(day));
+            const mCls = dayMonthIdx.get(dapDateKey(day)) % 2 === 0 ? 'dap-month-even' : 'dap-month-odd';
+            th.className = 'dap-th-dayname ' + mCls + (dow === 0 || isH ? ' dap-col-sun' : dow === 6 ? ' dap-col-sat' : '');
+            th.textContent = DIAS_ABREV[dow];
+            trDayNames.appendChild(th);
+        });
+        thead.appendChild(trDayNames);
+
+        // ── HEADER ROW 3: day numbers ──
+        const trDayNums = document.createElement('tr');
+        trDayNums.className = 'dap-tr-daynums';
+        for (let i = 0; i < 4; i++) {
+            const th = document.createElement('th');
+            th.className = `dap-sticky dap-sticky-${i} dap-th-empty`;
+            trDayNums.appendChild(th);
+        }
+        days.forEach(day => {
+            const th  = document.createElement('th');
+            const dow = day.getDay();
+            const isH = FERIADOS_CHILE.has(dapDateKey(day));
+            const mCls = dayMonthIdx.get(dapDateKey(day)) % 2 === 0 ? 'dap-month-even' : 'dap-month-odd';
+            th.className = 'dap-th-daynum ' + mCls + (dow === 0 || isH ? ' dap-col-sun' : dow === 6 ? ' dap-col-sat' : '');
+            th.textContent = day.getDate();
+            trDayNums.appendChild(th);
+        });
+        thead.appendChild(trDayNums);
+
+        table.appendChild(thead);
+
+        // ── DATA ROWS ──
+        enriched.forEach((r, rowIdx) => {
+            const startKey = dapDateKey(r.startDate);
+            const endKey   = dapDateKey(r.endDate);
+            const tr = document.createElement('tr');
+            tr.className = 'dap-data-row' + (rowIdx % 2 === 0 ? ' dap-row-even' : '');
+
+            // Sticky left cells
+            const tdOpera = document.createElement('td');
+            tdOpera.className = 'dap-sticky dap-sticky-0 dap-td-opera';
+            tdOpera.textContent = String(r.opera).slice(-4);
+            tr.appendChild(tdOpera);
+
+            const tdVence = document.createElement('td');
+            tdVence.className = 'dap-sticky dap-sticky-1 dap-td-vence';
+            tdVence.textContent = fmtFecha(r.startDate);
+            tr.appendChild(tdVence);
+
+            const tdMto = document.createElement('td');
+            tdMto.className = 'dap-sticky dap-sticky-2 dap-td-mto';
+            tdMto.textContent = fmtPesos(r.mto_fin);
+            tr.appendChild(tdMto);
+
+            const tdGana = document.createElement('td');
+            tdGana.className = 'dap-sticky dap-sticky-3 dap-td-gana';
+            tdGana.textContent = fmtPesos(r.gana);
+            tr.appendChild(tdGana);
+
+            // Calendar day cells
+            // Pre-calculate total calendar days in bar range for label placement
+            const totalCalDays = Math.round((r.endDate - r.startDate) / 86400000);
+            const midDayIdx    = Math.floor(totalCalDays / 2);
+
+            days.forEach((day, dayColIdx) => {
+                const key = dapDateKey(day);
+                const td  = document.createElement('td');
+                td.className = 'dap-day-cell';
+                // No weekend/holiday tinting in data rows — only header rows show color
+
+                if (key >= startKey && key <= endKey) {
+                    td.classList.add('dap-bar');
+                    if (key === startKey) td.classList.add('dap-bar-start');
+                    if (key === endKey)   td.classList.add('dap-bar-end');
+                    if (key !== startKey && key !== endKey) td.classList.add('dap-bar-mid');
+
+                    // Floating label at mid-point — uses absolute span so column width is unaffected
+                    const dayIdx = Math.round((new Date(key) - r.startDate) / 86400000);
+                    if (dayIdx === midDayIdx) {
+                        const span = document.createElement('span');
+                        span.className = 'dap-bar-label';
+                        span.textContent = fmtPesos(r.mto_fin);
+                        td.style.position = 'relative';
+                        td.appendChild(span);
+                    }
+                }
+
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+
+        table.appendChild(tbody);
+        scrollWrap.appendChild(table);
+        container.appendChild(scrollWrap);
+        container.style.display = 'block';
+    }
+
     // ================================================================
 
 }); // fin DOMContentLoaded
