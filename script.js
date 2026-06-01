@@ -2250,12 +2250,15 @@ document.addEventListener('DOMContentLoaded', () => {
         enriched.forEach((r, rowIdx) => {
             const startKey = dapDateKey(r.startDate);
             const endKey   = dapDateKey(r.endDate);
+            const esFijo   = String(r.tipo).toLowerCase().trim() === 'fijo';
             const tr = document.createElement('tr');
             tr.className = 'dap-data-row' + (rowIdx % 2 === 0 ? ' dap-row-even' : '');
+            if (esFijo) tr.classList.add('dap-row-fijo');
 
             // Sticky left cells
             const tdOpera = document.createElement('td');
             tdOpera.className = 'dap-sticky dap-sticky-0 dap-td-opera';
+            if (esFijo) tdOpera.classList.add('dap-td-fijo');
             tdOpera.textContent = String(r.opera).slice(-4);
             tr.appendChild(tdOpera);
 
@@ -2307,6 +2310,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
             tbody.appendChild(tr);
         });
+
+        // ── TOTALS ROW ──
+        const totalMtoFin = enriched.reduce((sum, r) => sum + (parseFloat(r.mto_fin) || 0), 0);
+        const totalGana   = enriched.reduce((sum, r) => sum + (parseFloat(r.gana)    || 0), 0);
+
+        const trTotal = document.createElement('tr');
+        trTotal.className = 'dap-totals-row';
+
+        const tdTotalLabel = document.createElement('td');
+        tdTotalLabel.className = 'dap-sticky dap-sticky-0 dap-td-opera dap-total-label';
+        tdTotalLabel.textContent = 'TOTAL';
+        trTotal.appendChild(tdTotalLabel);
+
+        const tdTotalVence = document.createElement('td');
+        tdTotalVence.className = 'dap-sticky dap-sticky-1 dap-td-vence dap-total-label';
+        tdTotalVence.textContent = enriched.length + ' DAP';
+        trTotal.appendChild(tdTotalVence);
+
+        const tdTotalMto = document.createElement('td');
+        tdTotalMto.className = 'dap-sticky dap-sticky-2 dap-td-mto dap-total-value';
+        tdTotalMto.textContent = fmtPesos(totalMtoFin);
+        trTotal.appendChild(tdTotalMto);
+
+        const tdTotalGana = document.createElement('td');
+        tdTotalGana.className = 'dap-sticky dap-sticky-3 dap-td-gana dap-total-value';
+        tdTotalGana.textContent = fmtPesos(totalGana);
+        trTotal.appendChild(tdTotalGana);
+
+        // Empty cells for calendar columns
+        days.forEach(() => {
+            const td = document.createElement('td');
+            td.className = 'dap-day-cell dap-total-empty';
+            trTotal.appendChild(td);
+        });
+
+        tbody.appendChild(trTotal);
 
         table.appendChild(tbody);
         scrollWrap.appendChild(table);

@@ -999,6 +999,47 @@ body:has(#dapView[style*="block"]) {
     filter: brightness(1.12);
 }
 
+
+/* ── DAP: fila tipo FIJO — rojo solo en columnas sticky (opera, vence, mto fin, gana) ── */
+.dap-row-fijo .dap-sticky {
+    background: rgba(153, 27, 27, 0.75) !important;
+    border-bottom: 1px solid rgba(220, 38, 38, 0.35) !important;
+}
+.dap-row-fijo .dap-td-opera {
+    color: #fca5a5 !important;
+}
+
+/* ── DAP: fila de totales ── */
+.dap-totals-row td {
+    height: 40px;
+    border-top: 2px solid rgba(255,255,255,0.18) !important;
+    border-bottom: none !important;
+    background: #3a38a0 !important;
+}
+.dap-totals-row .dap-sticky {
+    background: #3a38a0 !important;
+    border-top: 2px solid rgba(255,255,255,0.22) !important;
+}
+.dap-total-label {
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    color: rgba(255,255,255,0.55) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.dap-total-value {
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+}
+.dap-td-mto.dap-total-value {
+    color: #34d399 !important;
+}
+.dap-td-gana.dap-total-value {
+    color: #fbbf24 !important;
+}
+.dap-total-empty {
+    background: #3a38a0 !important;
+}
 /* --- VISTA F MUTUOS --- */
 #fmutuosView {
     display: none;
